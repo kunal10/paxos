@@ -1,3 +1,4 @@
+package ut.distcomp.paxos;
 import java.util.Scanner;
 
 public class Master {
