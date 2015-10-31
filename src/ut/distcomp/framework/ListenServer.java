@@ -9,22 +9,29 @@ package ut.distcomp.framework;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.logging.Level;
+
+import ut.distcomp.paxos.Message;
 
 public class ListenServer extends Thread {
 
 	public volatile boolean killSig = false;
-	final int port;
-	final int procNum;
-	final List<IncomingSock> socketList;
-	final Config conf;
-	final ServerSocket serverSock;
-
-	protected ListenServer(Config conf, List<IncomingSock> sockets) {
-		this.conf = conf;
-		this.socketList = sockets;
-
+	int port;
+	int procNum;
+	List<IncomingSock> socketList;
+	Config conf;
+	ServerSocket serverSock;
+	private BlockingQueue<Message> leaderQueue;
+	private BlockingQueue<Message> replicaQueue;
+	private BlockingQueue<Message> acceptorQueue;
+	private HashMap<Integer, BlockingQueue<Message>> commanderQueue;
+	private HashMap<Integer, BlockingQueue<Message>> scoutQueue;
+	private BlockingQueue<Message> clientQueue;
+	
+	private void startServerSock(){
 		procNum = conf.procNum;
 		port = conf.ports[procNum];
 		try {
@@ -40,11 +47,52 @@ public class ListenServer extends Thread {
 		}
 	}
 
+	protected ListenServer(Config conf, List<IncomingSock> sockets) {
+		this.conf = conf;
+		this.socketList = sockets;
+		startServerSock();
+	}
+
+	public ListenServer(Config config, List<IncomingSock> inSockets, BlockingQueue<Message> leaderQueue,
+			BlockingQueue<Message> replicaQueue, BlockingQueue<Message> acceptorQueue,
+			HashMap<Integer, BlockingQueue<Message>> commanderQueue,
+			HashMap<Integer, BlockingQueue<Message>> scoutQueue) {
+		this.conf = config;
+		this.socketList = inSockets;
+		this.leaderQueue = leaderQueue;
+		this.replicaQueue = replicaQueue;
+		this.acceptorQueue = acceptorQueue;
+		this.commanderQueue = commanderQueue;
+		this.scoutQueue = scoutQueue;
+		startServerSock();
+	}
+
+	public ListenServer(Config config, List<IncomingSock> inSockets, BlockingQueue<Message> clientQueue) {
+		this.conf = config;
+		this.socketList = inSockets;
+		this.clientQueue = clientQueue;
+		startServerSock();
+	}
+
 	public void run() {
 		while (!killSig) {
 			try {
-				IncomingSock incomingSock = new IncomingSock(
-						serverSock.accept());
+				IncomingSock incomingSock = null;
+				// Assuming servers are processes with id's less than 1000. All others are clients
+				if(procNum < 1000){
+					incomingSock = new IncomingSock(serverSock.accept(),
+							conf.logger,
+							leaderQueue,
+							replicaQueue,
+							acceptorQueue,
+							commanderQueue,
+							scoutQueue);
+				}else {
+					incomingSock = new IncomingSock(serverSock.accept(),
+							conf.logger,
+							clientQueue);
+				}
+				 
 				socketList.add(incomingSock);
 				incomingSock.start();
 				conf.logger.fine(String.format(

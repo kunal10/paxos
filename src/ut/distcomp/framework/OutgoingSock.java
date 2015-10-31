@@ -8,18 +8,19 @@
 package ut.distcomp.framework;
 
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+import ut.distcomp.paxos.Message;
+
 public class OutgoingSock {
-	final static byte[] MSG_SEP = "&".getBytes();
+	
 	Socket sock;
-	OutputStream out;
+	ObjectOutputStream out;
 	
 	protected OutgoingSock(Socket sock) throws IOException {
 		this.sock = sock;
-		
-		out = sock.getOutputStream();
+		out = new ObjectOutputStream(sock.getOutputStream());
 		sock.shutdownInput();
 	}
 	
@@ -28,9 +29,8 @@ public class OutgoingSock {
 	 * @param msg
 	 * @throws IOException 
 	 */
-	protected synchronized void sendMsg(String msg) throws IOException {
-		out.write(msg.getBytes());
-		out.write(MSG_SEP);
+	protected synchronized void sendMsg(Message msg) throws IOException {
+		out.writeObject(msg);
 		out.flush();
 	}
 	

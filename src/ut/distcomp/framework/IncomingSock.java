@@ -7,62 +7,60 @@
 
 package ut.distcomp.framework;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.HashMap;
+import java.util.concurrent.BlockingQueue;
+import java.util.logging.Logger;
+
+import ut.distcomp.paxos.Message;
 
 public class IncomingSock extends Thread {
-	final static String MSG_SEP = "&";
 	Socket sock;
-	InputStream in;
+	ObjectInputStream in;
 	private volatile boolean shutdownSet;
-	private final ConcurrentLinkedQueue<String> queue;
 	int bytesLastChecked = 0;
+	BlockingQueue<Message> leaderQueue;
+	BlockingQueue<Message> replicaQueue;
+	BlockingQueue<Message> acceptorQueue;
+	HashMap<Integer, BlockingQueue<Message>> commanderQueue;
+	HashMap<Integer, BlockingQueue<Message>> scoutQueue;
+	Logger logger;
+	BlockingQueue<Message> clientQueue;
 	
-	protected IncomingSock(Socket sock) throws IOException {
+	public IncomingSock(Socket sock, Logger logger, BlockingQueue<Message> leaderQueue,
+			BlockingQueue<Message> replicaQueue, BlockingQueue<Message> acceptorQueue,
+			HashMap<Integer, BlockingQueue<Message>> commanderQueue,
+			HashMap<Integer, BlockingQueue<Message>> scoutQueue) throws IOException {
 		this.sock = sock;
-		in = new BufferedInputStream(sock.getInputStream());
-		//in = sock.getInputStream();
-		sock.shutdownOutput();
-		queue = new ConcurrentLinkedQueue<String>();
+	    in = new ObjectInputStream(sock.getInputStream());
+	    sock.shutdownOutput();
+	    this.leaderQueue = leaderQueue;
+	    this.replicaQueue = replicaQueue;
+	    this.acceptorQueue = acceptorQueue;
+	    this.commanderQueue = commanderQueue;
+	    this.scoutQueue = scoutQueue;
+	    this.logger = logger;
 	}
-	
-	protected List<String> getMsgs() {
-		List<String> msgs = new ArrayList<String>();
-		String tmp;
-		while((tmp = queue.poll()) != null)
-			msgs.add(tmp);
-		return msgs;
+
+	public IncomingSock(Socket sock, Logger logger, BlockingQueue<Message> clientQueue) throws IOException {
+		this.sock = sock;
+	    in = new ObjectInputStream(sock.getInputStream());
+	    sock.shutdownOutput();
+	    this.logger = logger;
+	    this.clientQueue = clientQueue;
 	}
 	
 	public void run() {
 		while (!shutdownSet) {
 			try {
-				int avail = in.available();
-				if (avail == bytesLastChecked) {
-					sleep(10);
-				} else {
-					in.mark(avail);
-					byte[] data = new byte[avail];
-					in.read(data);
-					String dataStr = new String(data);
-					int curPtr = 0;
-					int curIdx;
-					while ((curIdx = dataStr.indexOf(MSG_SEP, curPtr)) != -1) {
-						queue.offer(dataStr.substring(curPtr, curIdx));
-						curPtr = curIdx + 1;
-					}
-					in.reset();
-					in.skip(curPtr);
-					bytesLastChecked = avail - curPtr;
-				}
+				Message msg = (Message) in.readObject();
+				//logger.info("Received : "+msg.sampleString);
 			} catch (IOException e) {
 				e.printStackTrace();
-			} catch (InterruptedException e) {
+			} catch (ClassNotFoundException e) {
+				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
