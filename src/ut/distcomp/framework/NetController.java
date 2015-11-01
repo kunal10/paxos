@@ -59,6 +59,8 @@ public class NetController {
 	 */
 	private HashMap<Integer,BlockingQueue<Message>> scoutQueue;
 	
+	private BlockingQueue<Message> heartbeatQueue;
+	
 	private BlockingQueue<Message> clientQueue;
 	
 	public NetController(Config config){
@@ -74,12 +76,14 @@ public class NetController {
 			BlockingQueue<Message> replicaQueue, 
 			BlockingQueue<Message> acceptorQueue, 
 			HashMap<Integer,BlockingQueue<Message>> commanderQueue, 
-			HashMap<Integer,BlockingQueue<Message>> scoutQueue) {
+			HashMap<Integer,BlockingQueue<Message>> scoutQueue,
+			BlockingQueue<Message> heartbeatQueue) {
 		this.leaderQueue = leaderQueue;
 		this.replicaQueue = replicaQueue;
 		this.acceptorQueue = acceptorQueue;
 		this.commanderQueue = commanderQueue;
 		this.scoutQueue = scoutQueue;
+		this.heartbeatQueue = heartbeatQueue;
 		this.config = config;
 		inSockets = Collections.synchronizedList(new ArrayList<IncomingSock>());
 		listener = new ListenServer(config, 
@@ -88,7 +92,8 @@ public class NetController {
 				replicaQueue,
 				acceptorQueue,
 				commanderQueue,
-				scoutQueue);
+				scoutQueue,
+				heartbeatQueue);
 		outSockets = new OutgoingSock[config.numProcesses];
 		listener.start();
 	}
@@ -216,8 +221,9 @@ public class NetController {
 		HashMap<Integer, BlockingQueue<Message>> scout = new HashMap<>();
 		BlockingQueue<Message> acceptor = new LinkedBlockingQueue<Message>();;
 		BlockingQueue<Message> replica = new LinkedBlockingQueue<Message>();
-		NetController p1_con = new NetController(p1, leader, replica, acceptor, commander, scout);
-		NetController p2_con = new NetController(p2, leader, replica, acceptor, commander, scout);
+		BlockingQueue<Message> heartbeat = new LinkedBlockingQueue<Message>();
+		NetController p1_con = new NetController(p1, leader, replica, acceptor, commander, scout, heartbeat);
+		NetController p2_con = new NetController(p2, leader, replica, acceptor, commander, scout, heartbeat);
 		Message m = new Message();
 		m.sampleString = "Hello World";
 		p1_con.sendMsg(1, m);

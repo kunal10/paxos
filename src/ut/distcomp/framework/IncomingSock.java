@@ -28,11 +28,13 @@ public class IncomingSock extends Thread {
 	HashMap<Integer, BlockingQueue<Message>> scoutQueue;
 	Logger logger;
 	BlockingQueue<Message> clientQueue;
+	BlockingQueue<Message> heartbeatQueue;
 	
 	public IncomingSock(Socket sock, Logger logger, BlockingQueue<Message> leaderQueue,
 			BlockingQueue<Message> replicaQueue, BlockingQueue<Message> acceptorQueue,
 			HashMap<Integer, BlockingQueue<Message>> commanderQueue,
-			HashMap<Integer, BlockingQueue<Message>> scoutQueue) throws IOException {
+			HashMap<Integer, BlockingQueue<Message>> scoutQueue,
+			BlockingQueue<Message> heartbeatQueue) throws IOException {
 		this.sock = sock;
 	    in = new ObjectInputStream(sock.getInputStream());
 	    sock.shutdownOutput();
@@ -42,6 +44,7 @@ public class IncomingSock extends Thread {
 	    this.commanderQueue = commanderQueue;
 	    this.scoutQueue = scoutQueue;
 	    this.logger = logger;
+	    this.heartbeatQueue = heartbeatQueue;
 	}
 
 	public IncomingSock(Socket sock, Logger logger, BlockingQueue<Message> clientQueue) throws IOException {

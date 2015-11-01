@@ -30,6 +30,7 @@ public class ListenServer extends Thread {
 	private HashMap<Integer, BlockingQueue<Message>> commanderQueue;
 	private HashMap<Integer, BlockingQueue<Message>> scoutQueue;
 	private BlockingQueue<Message> clientQueue;
+	private BlockingQueue<Message> heartbeatQueue;
 	
 	private void startServerSock(){
 		procNum = conf.procNum;
@@ -56,7 +57,8 @@ public class ListenServer extends Thread {
 	public ListenServer(Config config, List<IncomingSock> inSockets, BlockingQueue<Message> leaderQueue,
 			BlockingQueue<Message> replicaQueue, BlockingQueue<Message> acceptorQueue,
 			HashMap<Integer, BlockingQueue<Message>> commanderQueue,
-			HashMap<Integer, BlockingQueue<Message>> scoutQueue) {
+			HashMap<Integer, BlockingQueue<Message>> scoutQueue,
+			BlockingQueue<Message> heartbeatQueue) {
 		this.conf = config;
 		this.socketList = inSockets;
 		this.leaderQueue = leaderQueue;
@@ -64,6 +66,7 @@ public class ListenServer extends Thread {
 		this.acceptorQueue = acceptorQueue;
 		this.commanderQueue = commanderQueue;
 		this.scoutQueue = scoutQueue;
+		this.heartbeatQueue = heartbeatQueue;
 		startServerSock();
 	}
 
@@ -86,7 +89,8 @@ public class ListenServer extends Thread {
 							replicaQueue,
 							acceptorQueue,
 							commanderQueue,
-							scoutQueue);
+							scoutQueue,
+							heartbeatQueue);
 				}else {
 					incomingSock = new IncomingSock(serverSock.accept(),
 							conf.logger,
