@@ -36,6 +36,7 @@ public class NetController {
 	private final List<IncomingSock> inSockets;
 	private final OutgoingSock[] outSockets;
 	private final ListenServer listener;
+	private final int numOfServers;
 	/*
 	 * Queue used by leader thread to retrieve its messages.
 	 */
@@ -50,12 +51,14 @@ public class NetController {
 	private BlockingQueue<Message> acceptorQueue;
 	/*
 	 * Map of a commander to the queue used by it to retrieve its messages. 
-	 * TODO: Once commander finishes its execution it must remove its entry from this queue. 
+	 * TODO: Once commander finishes its execution it must remove its entry 
+	 * from this queue. 
 	 */
 	private HashMap<Integer,BlockingQueue<Message>> commanderQueue;
 	/*
 	 * Map of a scout to the queue used by it to retrieve its messages. 
-	 * TODO: Once scout finishes its execution it must remove its entry from this queue. 
+	 * TODO: Once scout finishes its execution it must remove its entry 
+	 * from this queue. 
 	 */
 	private HashMap<Integer,BlockingQueue<Message>> scoutQueue;
 	
@@ -63,15 +66,8 @@ public class NetController {
 	
 	private BlockingQueue<Message> clientQueue;
 	
-	public NetController(Config config){
-		this.config = config;
-		inSockets = Collections.synchronizedList(new ArrayList<IncomingSock>());
-		listener = new ListenServer(config, inSockets);
-		outSockets = new OutgoingSock[config.numProcesses];
-		listener.start();
-	}
-	
 	public NetController(Config config, 
+			int numOfServers,
 			BlockingQueue<Message> leaderQueue, 
 			BlockingQueue<Message> replicaQueue, 
 			BlockingQueue<Message> acceptorQueue, 
@@ -85,6 +81,7 @@ public class NetController {
 		this.scoutQueue = scoutQueue;
 		this.heartbeatQueue = heartbeatQueue;
 		this.config = config;
+		this.numOfServers = numOfServers;
 		inSockets = Collections.synchronizedList(new ArrayList<IncomingSock>());
 		listener = new ListenServer(config, 
 				inSockets,
@@ -99,9 +96,11 @@ public class NetController {
 	}
 	
 	public NetController(Config config,
+			int numOfServers,
 			BlockingQueue<Message> clientQueue){
 		this.clientQueue = clientQueue;
 		this.config = config;
+		this.numOfServers = numOfServers;
 		inSockets = Collections.synchronizedList(new ArrayList<IncomingSock>());
 		listener = new ListenServer(config, inSockets, clientQueue);
 		outSockets = new OutgoingSock[config.numProcesses];
@@ -116,6 +115,27 @@ public class NetController {
 		outSockets[proc] = new OutgoingSock(new Socket(config.addresses[proc], config.ports[proc]));
 		config.logger.info(String.format("Server %d: Socket to %d established", 
 				config.procNum, proc));
+	}
+	
+	/**
+	 * Send the message to the specified server ID.
+	 * @param serverId
+	 * @param msg
+	 * @return
+	 */
+	public boolean sendMessageToServer(int serverId, Message msg){
+		return sendMsg(serverId, msg);
+	}
+	
+	/**
+	 * Send the message to the specified client ID.
+	 * @param clientId
+	 * @param msg
+	 * @return
+	 */
+	public boolean sendMessageToClient(int clientId, Message msg){
+		int clientProcessId = clientId + numOfServers;
+		return sendMsg(clientProcessId, msg);
 	}
 	
 	/**
@@ -204,9 +224,11 @@ public class NetController {
 	public static void main(String[] args){
 		Config p1 = null;
 		Config p2 = null;
+		int numOfServers = 2;
+		int numOfClients = 2;
 		try {
-			p1 = new Config("config_p0.txt");
-			p2 = new Config("config_p1.txt");
+			p1 = new Config(0, numOfServers, numOfClients, "config_p0.txt");
+			p2 = new Config(1, numOfServers, numOfClients, "config_p1.txt");
 			
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -222,8 +244,9 @@ public class NetController {
 		BlockingQueue<Message> acceptor = new LinkedBlockingQueue<Message>();;
 		BlockingQueue<Message> replica = new LinkedBlockingQueue<Message>();
 		BlockingQueue<Message> heartbeat = new LinkedBlockingQueue<Message>();
-		NetController p1_con = new NetController(p1, leader, replica, acceptor, commander, scout, heartbeat);
-		NetController p2_con = new NetController(p2, leader, replica, acceptor, commander, scout, heartbeat);
+		
+		NetController p1_con = new NetController(p1, numOfServers, leader, replica, acceptor, commander, scout, heartbeat);
+		NetController p2_con = new NetController(p2, numOfServers, leader, replica, acceptor, commander, scout, heartbeat);
 		Message m = new Message();
 		m.sampleString = "Hello World";
 		p1_con.sendMsg(1, m);

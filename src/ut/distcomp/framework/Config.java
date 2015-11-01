@@ -27,23 +27,21 @@ public class Config {
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */
-	public Config(String filename) throws FileNotFoundException, IOException {		Properties prop = new Properties();
-		prop.load(new FileInputStream(filename));
-		numProcesses = loadInt(prop,"NumProcesses");
-		logger = Logger.getLogger("NetFramework"+prop.getProperty("procNum"));
-		FileHandler fileHandler = new FileHandler(prop.getProperty("logfile"));
+	public Config(int procNum, int numServers, int numClients, String logfile) 
+			throws FileNotFoundException, IOException {
+		this.procNum = procNum;
+		this.numProcesses = numServers + numClients;
+		logger = Logger.getLogger("NetFramework" + procNum);
+		FileHandler fileHandler = new FileHandler(logfile);
 		logger.addHandler(fileHandler);  
+		logger.setUseParentHandlers(false);
         fileHandler.setFormatter(new MyFormatter());  
 		addresses = new InetAddress[numProcesses];
 		ports = new int[numProcesses];
+		int basePort = 5000;
 		for (int i=0; i < numProcesses; i++) {
-			ports[i] = loadInt(prop, "port" + i);
-			addresses[i] = InetAddress.getByName(prop.getProperty("host" + i).trim());
-		}
-		if (prop.getProperty("procNum") != null) {
-			procNum = loadInt(prop,"procNum");
-		} else {
-			logger.info("procNum not loaded from file");
+			ports[i] = basePort + i;
+			addresses[i] = InetAddress.getByName("localhost");
 		}
 	}
 	

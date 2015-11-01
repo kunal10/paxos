@@ -59,7 +59,7 @@ public class IncomingSock extends Thread {
 		while (!shutdownSet) {
 			try {
 				Message msg = (Message) in.readObject();
-				//logger.info("Received : "+msg.sampleString);
+				logger.info("Received : "+msg.sampleString);
 			} catch (IOException e) {
 				e.printStackTrace();
 			} catch (ClassNotFoundException e) {
