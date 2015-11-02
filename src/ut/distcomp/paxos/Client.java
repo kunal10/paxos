@@ -1,7 +1,7 @@
 package ut.distcomp.paxos;
 
-import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -9,6 +9,7 @@ import java.util.logging.Level;
 
 import ut.distcomp.framework.Config;
 import ut.distcomp.framework.NetController;
+import ut.distcomp.paxos.Command.CommandType;
 
 /**
  * Client which attempts to add a message to the chat log. Should broadcast a
@@ -32,7 +33,8 @@ public class Client {
 		this.clientQueue = new LinkedBlockingQueue<>();
 		this.config = config;
 		this.nc = new NetController(config, numOfServers, clientQueue);
-		this.outstandingRequests = new ArrayList<>();
+		this.outstandingRequests = Collections.synchronizedList(
+				new ArrayList<Integer>());
 		startReceiveThread();
 	}
 
@@ -54,9 +56,11 @@ public class Client {
 	 */
 	public void sendMessageToChatroom(int serverId, String m) {
 		for (int i = 0; i < numOfServers; i++) {
-			Message msg = new Message();
-			// TODO: Construct appropriate message here to send to the server.
-			// TODO: Add the request to outstanding requests. Use sync.
+			Message msg = new Message(clientId, i);
+			int currentCommandId = getNextUniqueCommandNumber();
+			msg.setRequestContent(new Command(clientId, 
+					currentCommandId, CommandType.SEND_MSG, m));
+			outstandingRequests.add(currentCommandId);
 			if (nc.sendMessageToServer(i, msg)) {
 				config.logger.info("Succesfully sent to " + i + "\nMessage Sent : " 
 			+ "\n" + msg.toString());
@@ -85,9 +89,22 @@ public class Client {
 			while (true) {
 				try {
 					Message m = clientQueue.take();
-					// TODO: If the length of the response is higher update the
-					// state. Check if the state now contains any message in
-					// outstanding requests and remove.
+					List<String> listofMessages = m.getOutput();
+					// Update chat log if any new messages have arrived.
+					if(listofMessages.size() > chatLog.size()){
+						chatLog = listofMessages;
+						config.logger.info("Changed the state of chat log "
+								+ "consuming Message " + m.toString());
+					}
+					// Remove an outstanding request if you have received.
+					if(m.getCommand().getClientId() == clientId){
+						int commandIdToBeRemoved = m.getCommand().getCommandId();
+						if(outstandingRequests.contains(commandIdToBeRemoved)){
+							outstandingRequests.remove(commandIdToBeRemoved);
+							config.logger.info("Removed "+commandIdToBeRemoved +
+									" on receipt of message "+m.toString());
+						}
+					}
 				} catch (InterruptedException e) {
 					config.logger.log(Level.SEVERE, "Client " + clientId + 
 							" interrupted while waiting for message");
@@ -109,10 +126,10 @@ public class Client {
 	 * 
 	 * @return
 	 */
-	private String getNextUniqueCommandNumber() {
-		String uniqueId = clientId + "^" + commandId;
+	private int getNextUniqueCommandNumber() {
+		int commandIdToSend = commandId;
 		++commandId;
-		return uniqueId;
+		return commandIdToSend;
 	}
 
 	/**
@@ -147,23 +164,10 @@ public class Client {
 	 * keeps the list of all the outstanding requests to the server which is not
 	 * added yet.
 	 */
-	private List<String> outstandingRequests;
+	private List<Integer> outstandingRequests;
 
 	/**
 	 * Reference to the receive thread
 	 */
 	private Thread receiveThread;
-}
-
-class ClientCommand implements Serializable {
-	public ClientCommand(String message, String commandNumber, int clientNumber) {
-		super();
-		this.message = message;
-		this.commandNumber = commandNumber;
-		this.clientNumber = clientNumber;
-	}
-
-	String message;
-	String commandNumber;
-	int clientNumber;
 }

@@ -14,7 +14,8 @@ import ut.distcomp.framework.NetController;
  */
 public class Server {
 	
-	public Server(int serverId, int numOfClients, int numOfServers, Config config) {
+	public Server(int serverId, int numOfClients, int numOfServers, 
+			Config config) {
 		super();
 		this.serverId = serverId;
 		this.numOfClients = numOfClients;
@@ -24,8 +25,8 @@ public class Server {
 		this.replicaQueue = new LinkedBlockingQueue<>();
 		this.acceptorQueue = new LinkedBlockingQueue<>();
 		this.heartbeatQueue = new LinkedBlockingQueue<>();
-		this.commanderQueue = new HashMap<>();
-		this.scoutQueue = new HashMap<>();
+		this.commanderQueue = new LinkedBlockingQueue<>();
+		this.scoutQueue = new LinkedBlockingQueue<>();
 		this.nc = new NetController(config, numOfServers, leaderQueue, 
 				replicaQueue, acceptorQueue, commanderQueue, scoutQueue, 
 				heartbeatQueue);
@@ -120,9 +121,9 @@ public class Server {
 	/**
 	 * Reference to the list of commander queues
 	 */
-	private HashMap<Integer,BlockingQueue<Message>> commanderQueue;
+	BlockingQueue<Message> commanderQueue;
 	/**
 	 * Reference to list of scout queues.
 	 */
-	private HashMap<Integer,BlockingQueue<Message>> scoutQueue;
+	BlockingQueue<Message> scoutQueue;
 }
