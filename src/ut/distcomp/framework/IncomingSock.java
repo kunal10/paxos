@@ -47,7 +47,8 @@ public class IncomingSock extends Thread {
 		this.heartbeatQueue = heartbeatQueue;
 	}
 
-	public IncomingSock(Socket sock, Logger logger, BlockingQueue<Message> clientQueue) throws IOException {
+	public IncomingSock(Socket sock, Logger logger, 
+			BlockingQueue<Message> clientQueue) throws IOException {
 		this.sock = sock;
 		in = new ObjectInputStream(sock.getInputStream());
 		sock.shutdownOutput();
@@ -59,7 +60,7 @@ public class IncomingSock extends Thread {
 		while (!shutdownSet) {
 			try {
 				Message msg = (Message) in.readObject();
-				logger.info("Received : " + msg.sampleString);
+				logger.info("\n\nReceived : "+msg.toString());
 			} catch (IOException e) {
 				e.printStackTrace();
 			} catch (ClassNotFoundException e) {

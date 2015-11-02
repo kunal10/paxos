@@ -245,10 +245,11 @@ public class NetController {
 		BlockingQueue<Message> replica = new LinkedBlockingQueue<Message>();
 		BlockingQueue<Message> heartbeat = new LinkedBlockingQueue<Message>();
 		
-		NetController p1_con = new NetController(p1, numOfServers, leader, replica, acceptor, commander, scout, heartbeat);
-		NetController p2_con = new NetController(p2, numOfServers, leader, replica, acceptor, commander, scout, heartbeat);
-		Message m = new Message();
-		m.sampleString = "Hello World";
+		NetController p1_con = new NetController(p1, numOfServers, leader, 
+				replica, acceptor, commander, scout, heartbeat);
+		NetController p2_con = new NetController(p2, numOfServers, leader, 
+				replica, acceptor, commander, scout, heartbeat);
+		Message m = new Message(0,1);
 		p1_con.sendMsg(1, m);
 
 	}
