@@ -29,37 +29,37 @@ public class IncomingSock extends Thread {
 	Logger logger;
 	BlockingQueue<Message> clientQueue;
 	BlockingQueue<Message> heartbeatQueue;
-	
+
 	public IncomingSock(Socket sock, Logger logger, BlockingQueue<Message> leaderQueue,
 			BlockingQueue<Message> replicaQueue, BlockingQueue<Message> acceptorQueue,
 			HashMap<Integer, BlockingQueue<Message>> commanderQueue,
-			HashMap<Integer, BlockingQueue<Message>> scoutQueue,
-			BlockingQueue<Message> heartbeatQueue) throws IOException {
+			HashMap<Integer, BlockingQueue<Message>> scoutQueue, BlockingQueue<Message> heartbeatQueue)
+					throws IOException {
 		this.sock = sock;
-	    in = new ObjectInputStream(sock.getInputStream());
-	    sock.shutdownOutput();
-	    this.leaderQueue = leaderQueue;
-	    this.replicaQueue = replicaQueue;
-	    this.acceptorQueue = acceptorQueue;
-	    this.commanderQueue = commanderQueue;
-	    this.scoutQueue = scoutQueue;
-	    this.logger = logger;
-	    this.heartbeatQueue = heartbeatQueue;
+		in = new ObjectInputStream(sock.getInputStream());
+		sock.shutdownOutput();
+		this.leaderQueue = leaderQueue;
+		this.replicaQueue = replicaQueue;
+		this.acceptorQueue = acceptorQueue;
+		this.commanderQueue = commanderQueue;
+		this.scoutQueue = scoutQueue;
+		this.logger = logger;
+		this.heartbeatQueue = heartbeatQueue;
 	}
 
 	public IncomingSock(Socket sock, Logger logger, BlockingQueue<Message> clientQueue) throws IOException {
 		this.sock = sock;
-	    in = new ObjectInputStream(sock.getInputStream());
-	    sock.shutdownOutput();
-	    this.logger = logger;
-	    this.clientQueue = clientQueue;
+		in = new ObjectInputStream(sock.getInputStream());
+		sock.shutdownOutput();
+		this.logger = logger;
+		this.clientQueue = clientQueue;
 	}
-	
+
 	public void run() {
 		while (!shutdownSet) {
 			try {
 				Message msg = (Message) in.readObject();
-				logger.info("Received : "+msg.sampleString);
+				logger.info("Received : " + msg.sampleString);
 			} catch (IOException e) {
 				e.printStackTrace();
 			} catch (ClassNotFoundException e) {
@@ -67,20 +67,24 @@ public class IncomingSock extends Thread {
 				e.printStackTrace();
 			}
 		}
-		
+
 		shutdown();
 	}
-	
+
 	public void cleanShutdown() {
 		shutdownSet = true;
 	}
-	
+
 	protected void shutdown() {
-		try { in.close(); } catch (IOException e) {}
-		
-		try { 
+		try {
+			in.close();
+		} catch (IOException e) {
+		}
+
+		try {
 			sock.shutdownInput();
-			sock.close(); }			
-		catch (IOException e) {}
+			sock.close();
+		} catch (IOException e) {
+		}
 	}
 }
