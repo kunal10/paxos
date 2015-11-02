@@ -82,8 +82,7 @@ public class NetController {
 		this.config = config;
 		this.numOfServers = config.numOfServers;
 		inSockets = Collections.synchronizedList(new ArrayList<IncomingSock>());
-		listener = new ListenServer(config, 
-				inSockets,
+		listener = new ListenServer(config, inSockets,
 				leaderQueue,
 				replicaQueue,
 				acceptorQueue,
@@ -106,12 +105,49 @@ public class NetController {
 		listener.start();
 	}
 	
+	public Config getConfig() {
+		return config;
+	}
+
+	public int getNumOfServers() {
+		return numOfServers;
+	}
+
+	public BlockingQueue<Message> getLeaderQueue() {
+		return leaderQueue;
+	}
+
+	public BlockingQueue<Message> getReplicaQueue() {
+		return replicaQueue;
+	}
+
+	public BlockingQueue<Message> getAcceptorQueue() {
+		return acceptorQueue;
+	}
+
+	public BlockingQueue<Message> getCommanderQueue() {
+		return commanderQueue;
+	}
+
+	public BlockingQueue<Message> getScoutQueue() {
+		return scoutQueue;
+	}
+
+	public BlockingQueue<Message> getHeartbeatQueue() {
+		return heartbeatQueue;
+	}
+
+	public BlockingQueue<Message> getClientQueue() {
+		return clientQueue;
+	}
+
 	// Establish outgoing connection to a process
 	private synchronized void initOutgoingConn(int proc) throws IOException {
 		if (outSockets[proc] != null)
 			throw new IllegalStateException("proc " + proc + " not null");
 		
-		outSockets[proc] = new OutgoingSock(new Socket(config.addresses[proc], config.ports[proc]));
+		outSockets[proc] = new OutgoingSock(new Socket(config.addresses[proc], 
+				config.ports[proc]));
 		config.logger.info(String.format("Server %d: Socket to %d established", 
 				config.procNum, proc));
 	}
@@ -162,18 +198,19 @@ public class NetController {
 						outSockets[process].cleanShutdown();
 	                	outSockets[process] = null;
 					}
-					config.logger.info(String.format("Server %d: Msg to %d failed.",
-                        config.procNum, process));
-        		    config.logger.log(Level.FINE, String.format("Server %d: Socket to %d error",
-                        config.procNum, process), e);
+					config.logger.info(String.format("Server %d: Msg to %d "
+							+ "failed.", config.procNum, process));
+        		    config.logger.log(Level.FINE, String.format("Server %d: "
+        		    		+ "Socket to %d error", config.procNum, process), 
+        		    		e);
                     return false;
 				}
 				return true;
 			}
 			config.logger.info(String.format("Server %d: Msg to %d failed.", 
 				config.procNum, process));
-			config.logger.log(Level.FINE, String.format("Server %d: Socket to %d error", 
-				config.procNum, process), e);
+			config.logger.log(Level.FINE, String.format("Server %d: Socket to"
+					+ " %d error", config.procNum, process), e);
 			return false;
 		}
 		return true;
@@ -181,7 +218,8 @@ public class NetController {
 	
 	/**
 	 * Return a list of msgs received on established incoming sockets
-	 * @return list of messages sorted by socket, in FIFO order. *not sorted by time received*
+	 * @return list of messages sorted by socket, in FIFO order. *not sorted by
+	 * time received*
 	 */
 	public synchronized List<String> getReceivedMsgs() {
 		List<String> objs = new ArrayList<String>();
@@ -193,7 +231,8 @@ public class NetController {
 					
 				} catch (Exception e) {
 					config.logger.log(Level.INFO, 
-							"Server " + config.procNum + " received bad data on a socket", e);
+							"Server " + config.procNum + 
+							" received bad data on a socket", e);
 					curSock.cleanShutdown();
 					iter.remove();
 				}

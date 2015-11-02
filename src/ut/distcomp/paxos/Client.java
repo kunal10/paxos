@@ -57,11 +57,11 @@ public class Client {
 					currentCommandId, CommandType.SEND_MSG, m));
 			outstandingRequests.add(currentCommandId);
 			if (nc.sendMessageToServer(i, msg)) {
-				config.logger.info("Succesfully sent to " + i + "\nMessage Sent : " 
-			+ "\n" + msg.toString());
+				config.logger.info("Succesfully sent to " + i + 
+						"\nMessage Sent : " + "\n" + msg.toString());
 			} else {
-				config.logger.info("Unsuccessful send to " + i + "\nMessage Sent : " 
-			+ "\n" + msg.toString());
+				config.logger.info("Unsuccessful send to " + i + 
+						"\nMessage Sent : " + "\n" + msg.toString());
 			}
 		}
 	}

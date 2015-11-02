@@ -7,12 +7,11 @@ import ut.distcomp.framework.NetController;
 
 public class Heartbeat implements Runnable {
 
-	public Heartbeat(Config config, NetController nc, 
-			BlockingQueue<Message> heartbeatQueue, int serverId) {
+	public Heartbeat(Config config, NetController nc, int serverId) {
 		super();
 		this.config = config;
 		this.nc = nc;
-		this.heartbeatQueue = heartbeatQueue;
+		this.heartbeatQueue = nc.getHeartbeatQueue();
 		this.serverId = serverId;
 	}
 	@Override
@@ -23,6 +22,6 @@ public class Heartbeat implements Runnable {
 	final private Config config;
 	final private NetController nc;
 	private BlockingQueue<Message> heartbeatQueue;
-	private int currentPrimaryLeaderValue;
+	private int currentPlId;
 	final private int serverId;
 }
