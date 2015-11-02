@@ -58,6 +58,7 @@ public class Acceptor implements Runnable {
 				nc.sendMessageToServer(b.getlId(), msg);
 				break;
 			default:
+				config.logger.severe("Received Unexpected Msg" + m.toString());
 				break;
 			}
 		}

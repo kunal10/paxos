@@ -82,6 +82,7 @@ public class Replica implements Runnable {
 				}
 				break;
 			default:
+				config.logger.severe("Received Unexpected Msg" + m.toString());
 				break;
 			}
 		}
