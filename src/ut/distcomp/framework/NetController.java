@@ -54,13 +54,13 @@ public class NetController {
 	 * TODO: Once commander finishes its execution it must remove its entry 
 	 * from this queue. 
 	 */
-	private HashMap<Integer,BlockingQueue<Message>> commanderQueue;
+	private BlockingQueue<Message> commanderQueue;
 	/*
 	 * Map of a scout to the queue used by it to retrieve its messages. 
 	 * TODO: Once scout finishes its execution it must remove its entry 
 	 * from this queue. 
 	 */
-	private HashMap<Integer,BlockingQueue<Message>> scoutQueue;
+	private BlockingQueue<Message> scoutQueue;
 	
 	private BlockingQueue<Message> heartbeatQueue;
 	
@@ -71,8 +71,8 @@ public class NetController {
 			BlockingQueue<Message> leaderQueue, 
 			BlockingQueue<Message> replicaQueue, 
 			BlockingQueue<Message> acceptorQueue, 
-			HashMap<Integer,BlockingQueue<Message>> commanderQueue, 
-			HashMap<Integer,BlockingQueue<Message>> scoutQueue,
+			BlockingQueue<Message> commanderQueue, 
+			BlockingQueue<Message> scoutQueue,
 			BlockingQueue<Message> heartbeatQueue) {
 		this.leaderQueue = leaderQueue;
 		this.replicaQueue = replicaQueue;
@@ -239,8 +239,8 @@ public class NetController {
 		}
 		
 		BlockingQueue<Message> leader = new LinkedBlockingQueue<Message>();
-		HashMap<Integer, BlockingQueue<Message>> commander = new HashMap<>();
-		HashMap<Integer, BlockingQueue<Message>> scout = new HashMap<>();
+		BlockingQueue<Message> commander = new LinkedBlockingQueue<Message>();
+		BlockingQueue<Message> scout = new LinkedBlockingQueue<Message>();
 		BlockingQueue<Message> acceptor = new LinkedBlockingQueue<Message>();;
 		BlockingQueue<Message> replica = new LinkedBlockingQueue<Message>();
 		BlockingQueue<Message> heartbeat = new LinkedBlockingQueue<Message>();

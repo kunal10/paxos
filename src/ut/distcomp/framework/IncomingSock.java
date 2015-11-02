@@ -24,16 +24,16 @@ public class IncomingSock extends Thread {
 	BlockingQueue<Message> leaderQueue;
 	BlockingQueue<Message> replicaQueue;
 	BlockingQueue<Message> acceptorQueue;
-	HashMap<Integer, BlockingQueue<Message>> commanderQueue;
-	HashMap<Integer, BlockingQueue<Message>> scoutQueue;
+	BlockingQueue<Message> commanderQueue;
+	BlockingQueue<Message> scoutQueue;
 	Logger logger;
 	BlockingQueue<Message> clientQueue;
 	BlockingQueue<Message> heartbeatQueue;
 
 	public IncomingSock(Socket sock, Logger logger, BlockingQueue<Message> leaderQueue,
 			BlockingQueue<Message> replicaQueue, BlockingQueue<Message> acceptorQueue,
-			HashMap<Integer, BlockingQueue<Message>> commanderQueue,
-			HashMap<Integer, BlockingQueue<Message>> scoutQueue, BlockingQueue<Message> heartbeatQueue)
+			BlockingQueue<Message> commanderQueue,
+			BlockingQueue<Message> scoutQueue, BlockingQueue<Message> heartbeatQueue)
 					throws IOException {
 		this.sock = sock;
 		in = new ObjectInputStream(sock.getInputStream());
@@ -60,6 +60,7 @@ public class IncomingSock extends Thread {
 		while (!shutdownSet) {
 			try {
 				Message msg = (Message) in.readObject();
+				addMessageToDestinationQueue(msg);
 				logger.info("\n\nReceived : "+msg.toString());
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -70,6 +71,40 @@ public class IncomingSock extends Thread {
 		}
 
 		shutdown();
+	}
+
+	private void addMessageToDestinationQueue(Message msg) {
+		switch(msg.getDestType()){
+			case ACCEPTOR:
+				acceptorQueue.add(msg);
+				logger.info("Added to acceptor queue Message :"+ msg.toString());
+				break;
+			case CLIENT:
+				clientQueue.add(msg);
+				logger.info("Added to client queue Message :"+ msg.toString());
+				break;
+			case COMMANDER:
+				commanderQueue.add(msg);
+				logger.info("Added to commander queue Message :"+ msg.toString());
+				break;
+			case LEADER:
+				leaderQueue.add(msg);
+				logger.info("Added to leader queue Message :"+ msg.toString());
+				break;
+			case REPLICA:
+				replicaQueue.add(msg);
+				logger.info("Added to replica queue Message :"+ msg.toString());
+				break;
+			case SCOUT:
+				scoutQueue.add(msg);
+				logger.info("Added to scout queue Message :"+ msg.toString());
+				break;
+			case SERVER:
+				heartbeatQueue.add(msg);
+				logger.info("Added to heartbeat queue Message :"+ msg.toString());
+				break;
+		}
+		
 	}
 
 	public void cleanShutdown() {
