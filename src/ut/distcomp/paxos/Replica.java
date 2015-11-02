@@ -39,6 +39,7 @@ public class Replica implements Runnable {
 			}
 			switch (m.getMsgType()) {
 			case REQUEST:
+				config.logger.info("Received Request:" + m.toString());
 				SValue sv = m.getsValue();
 				if (sv == null) {
 					config.logger.severe("Received invalid request: " +
@@ -48,6 +49,7 @@ public class Replica implements Runnable {
 				propose(sv.getCommand());
 				break;
 			case DECISION:
+				config.logger.info("Received Decision:" + m.toString());
 				// Add decision to decisions.
 				SValue decision = m.getsValue();
 				if (decision == null) {
@@ -98,6 +100,7 @@ public class Replica implements Runnable {
 		for (int leaderId = 0; leaderId < config.numOfServers; leaderId++) {
 			Message msg = new Message(replicaId, leaderId);
 			msg.setProposeContent(s1, c);
+			config.logger.info("Sending Propose msg:" + msg.toString());
 			// TODO(asvenk) : What is the appropriate method to be used here.
 			nc.sendMessageToServer(leaderId, msg);
 		}
