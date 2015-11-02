@@ -28,7 +28,7 @@ public class Config {
 	 * @throws IOException
 	 */
 	public Config(int procNum, int numServers, int numClients, String logfile) 
-			throws FileNotFoundException, IOException {
+			throws IOException {
 		this.procNum = procNum;
 		this.numOfClients = numClients;
 		this.numOfServers = numServers;

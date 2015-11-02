@@ -17,7 +17,7 @@ public class Commander implements Runnable {
 		super();
 		this.config = config;
 		this.nc = nc;
-		this.queue = nc.getCommanderQueue();
+		this.queue = nc.getCommanderQueue(commanderId);
 		this.commanderId = commanderId;
 		this.pValue = new PValue(pValue);
 	}
@@ -81,7 +81,7 @@ public class Commander implements Runnable {
 		for (int acceptorId = 0; acceptorId < config.numOfServers;
 				acceptorId++) {
 			msg = new Message(commanderId, acceptorId);
-			msg.setP2AContent(pValue);
+			msg.setP2AContent(pValue, commanderId);
 			nc.sendMessageToServer(acceptorId, msg);
 		}
 	}

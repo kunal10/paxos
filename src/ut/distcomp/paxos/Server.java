@@ -24,8 +24,8 @@ public class Server {
 		this.replicaQueue = new LinkedBlockingQueue<>();
 		this.acceptorQueue = new LinkedBlockingQueue<>();
 		this.heartbeatQueue = new LinkedBlockingQueue<>();
-		this.commanderQueue = new LinkedBlockingQueue<>();
-		this.scoutQueue = new LinkedBlockingQueue<>();
+		this.commanderQueue = new HashMap<>();
+		this.scoutQueue = new HashMap<>();
 		this.nc = new NetController(config, leaderQueue, 
 				replicaQueue, acceptorQueue, commanderQueue, scoutQueue, 
 				heartbeatQueue);
@@ -53,7 +53,8 @@ public class Server {
 	 * Start the server.
 	 */
 	public void StartServer(){
-		
+		replicaThread = new Thread(new Replica(config, nc, serverId));
+		replicaThread.start();
 	}
 	
 	/**
@@ -120,9 +121,9 @@ public class Server {
 	/**
 	 * Reference to the list of commander queues
 	 */
-	BlockingQueue<Message> commanderQueue;
+	HashMap<Integer, BlockingQueue<Message>> commanderQueue;
 	/**
 	 * Reference to list of scout queues.
 	 */
-	BlockingQueue<Message> scoutQueue;
+	HashMap<Integer, BlockingQueue<Message>> scoutQueue;
 }

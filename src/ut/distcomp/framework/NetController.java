@@ -54,13 +54,13 @@ public class NetController {
 	 * TODO: Once commander finishes its execution it must remove its entry 
 	 * from this queue. 
 	 */
-	private BlockingQueue<Message> commanderQueue;
+	private HashMap<Integer,BlockingQueue<Message>> commanderQueue;
 	/*
 	 * Map of a scout to the queue used by it to retrieve its messages. 
 	 * TODO: Once scout finishes its execution it must remove its entry 
 	 * from this queue. 
 	 */
-	private BlockingQueue<Message> scoutQueue;
+	private HashMap<Integer,BlockingQueue<Message>> scoutQueue;
 	
 	private BlockingQueue<Message> heartbeatQueue;
 	
@@ -70,8 +70,8 @@ public class NetController {
 			BlockingQueue<Message> leaderQueue, 
 			BlockingQueue<Message> replicaQueue, 
 			BlockingQueue<Message> acceptorQueue, 
-			BlockingQueue<Message> commanderQueue, 
-			BlockingQueue<Message> scoutQueue,
+			HashMap<Integer, BlockingQueue<Message>> commanderQueue, 
+			HashMap<Integer, BlockingQueue<Message>> scoutQueue,
 			BlockingQueue<Message> heartbeatQueue) {
 		this.leaderQueue = leaderQueue;
 		this.replicaQueue = replicaQueue;
@@ -125,12 +125,12 @@ public class NetController {
 		return acceptorQueue;
 	}
 
-	public BlockingQueue<Message> getCommanderQueue() {
-		return commanderQueue;
+	public BlockingQueue<Message> getCommanderQueue(int i) {
+		return commanderQueue.get(i);
 	}
 
-	public BlockingQueue<Message> getScoutQueue() {
-		return scoutQueue;
+	public BlockingQueue<Message> getScoutQueue(int i) {
+		return scoutQueue.get(i);
 	}
 
 	public BlockingQueue<Message> getHeartbeatQueue() {
@@ -277,8 +277,8 @@ public class NetController {
 		}
 		
 		BlockingQueue<Message> leader = new LinkedBlockingQueue<Message>();
-		BlockingQueue<Message> commander = new LinkedBlockingQueue<Message>();
-		BlockingQueue<Message> scout = new LinkedBlockingQueue<Message>();
+		HashMap<Integer, BlockingQueue<Message>> commander = new HashMap<>();
+		HashMap<Integer, BlockingQueue<Message>> scout = new HashMap<>();
 		BlockingQueue<Message> acceptor = new LinkedBlockingQueue<Message>();;
 		BlockingQueue<Message> replica = new LinkedBlockingQueue<Message>();
 		BlockingQueue<Message> heartbeat = new LinkedBlockingQueue<Message>();

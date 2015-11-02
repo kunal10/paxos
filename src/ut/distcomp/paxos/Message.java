@@ -43,6 +43,7 @@ public class Message implements Serializable {
 		this.proposals = null;
 		this.decisions = null;
 		this.primary = -1;
+		this.threadId = -1;
 	}
 	
 	public void setHeartBeatContent(int pId) {
@@ -105,34 +106,38 @@ public class Message implements Serializable {
 		accepted = new HashSet<PValue>(pvalues);
 	}
 	
-	public void setP1AContent(Ballot b) {
+	public void setP1AContent(Ballot b, int scoutId) {
 		srcType = NodeType.SCOUT;
 		destType = NodeType.ACCEPTOR;
 		msgType = MessageType.P1A;
 		ballot = new Ballot(b);
+		threadId = scoutId;
 	}
 	
-	public void setP2AContent(PValue pv) {
+	public void setP2AContent(PValue pv, int commanderId) {
 		srcType = NodeType.COMMANDER;
 		destType = NodeType.ACCEPTOR;
 		msgType = MessageType.P2A;
 		ballot = new Ballot(pv.getBallot());
 		sValue = new SValue(pv.getsValue());
+		threadId = commanderId;
 	}
 	
-	public void setP1BContent(Ballot b, Set<PValue> pvalues) {
+	public void setP1BContent(Ballot b, Set<PValue> pvalues, int scoutId) {
 		srcType = NodeType.ACCEPTOR;
 		destType = NodeType.SCOUT;
 		msgType = MessageType.P1B;
 		ballot = new Ballot(b);
 		accepted = new HashSet<PValue>(pvalues);
+		threadId = scoutId;
 	}
 	
-	public void setP2BContent(Ballot b) {
+	public void setP2BContent(Ballot b, int commanderId) {
 		srcType = NodeType.ACCEPTOR;
 		destType = NodeType.COMMANDER;
 		msgType = MessageType.P2B;
 		ballot = new Ballot(b);
+		threadId = commanderId;
 	}
 	
 	public void setDecisionContent(SValue sv) {
@@ -245,6 +250,7 @@ public class Message implements Serializable {
 				result.append("\n" + elem.toString());
 			}
 		}
+		result.append("\nThread id :"+threadId);
 		result.append("\nPrimary: " + primary);
 		return result.toString();
 	}
@@ -271,6 +277,16 @@ public class Message implements Serializable {
 	private Set<SValue> decisions;
 	// Present in HeartBeat messages.
 	private int primary;
+	// Present in p1a and p2a messages.
+	private int threadId;
+
+	public int getThreadId() {
+		return threadId;
+	}
+
+	public void setThreadId(int threadId) {
+		this.threadId = threadId;
+	}
 
 	private static final long serialVersionUID = 1L;
 }

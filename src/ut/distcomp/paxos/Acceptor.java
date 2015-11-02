@@ -43,7 +43,7 @@ public class Acceptor implements Runnable {
 				if (b != null && b.compareTo(ballot) == 1) {
 					ballot = b;
 				}
-				msg.setP1BContent(ballot, accepted);
+				msg.setP1BContent(ballot, accepted, msg.getThreadId());
 				config.logger.info("Sending P1A msg:" + msg.toString());
 				nc.sendMessageToServer(b.getlId(), msg);
 				break;
@@ -53,7 +53,7 @@ public class Acceptor implements Runnable {
 					ballot = b;
 					accepted.add(new PValue(ballot, msg.getsValue()));
 				}
-				msg.setP2BContent(ballot);
+				msg.setP2BContent(ballot, m.getThreadId());
 				config.logger.info("Sending P2A msg:" + msg.toString());
 				nc.sendMessageToServer(b.getlId(), msg);
 				break;

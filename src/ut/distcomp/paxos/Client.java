@@ -45,11 +45,10 @@ public class Client {
 	 * Interface used by the master to send message to a chatroom. The client
 	 * broadcasts the message to all the server replicas.
 	 * 
-	 * @param serverId
 	 * @param m
 	 * @return
 	 */
-	public void sendMessageToChatroom(int serverId, String m) {
+	public void sendMessageToChatroom(String m) {
 		for (int i = 0; i < numOfServers; i++) {
 			Message msg = new Message(clientId, i);
 			int currentCommandId = getNextUniqueCommandNumber();

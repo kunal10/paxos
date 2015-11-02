@@ -9,12 +9,12 @@ import ut.distcomp.framework.NetController;
 import ut.distcomp.paxos.Message.NodeType;
 
 public class Scout {
-	public Scout(Config config, NetController nc, int commanderId, Ballot b) {
+	public Scout(Config config, NetController nc, int scoutId, Ballot b) {
 		super();
 		this.config = config;
 		this.nc = nc;
-		this.queue = nc.getScoutQueue();
-		this.commanderId = commanderId;
+		this.queue = nc.getScoutQueue(scoutId);
+		this.scoutId = scoutId;
 		this.b = new Ballot(b);
 	}
 	
@@ -42,7 +42,7 @@ public class Scout {
 						m.toString());
 				continue;
 			}
-			Message msg = new Message(commanderId, b.getlId());
+			Message msg = new Message(scoutId, b.getlId());
 			switch(m.getMsgType()) {
 			case P1B:
 				if (b1.equals(b)) {
@@ -80,13 +80,13 @@ public class Scout {
 		Message msg = null;
 		for (int acceptorId = 0; acceptorId < config.numOfServers;
 				acceptorId++) {
-			msg = new Message(commanderId, acceptorId);
-			msg.setP1AContent(b);
+			msg = new Message(scoutId, acceptorId);
+			msg.setP1AContent(b, scoutId);
 			nc.sendMessageToServer(acceptorId, msg);
 		}
 	}
 	
-	private int commanderId;
+	private int scoutId;
 	private Ballot b;
 	private BlockingQueue<Message> queue;
 	private NetController nc;

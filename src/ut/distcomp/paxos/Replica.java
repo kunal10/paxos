@@ -40,13 +40,13 @@ public class Replica implements Runnable {
 			switch (m.getMsgType()) {
 			case REQUEST:
 				config.logger.info("Received Request:" + m.toString());
-				SValue sv = m.getsValue();
-				if (sv == null) {
+				Command command = m.getCommand();
+				if (command == null) {
 					config.logger.severe("Received invalid request: " +
 							m.toString());
 					break;
 				}
-				propose(sv.getCommand());
+				propose(m.getCommand());
 				break;
 			case DECISION:
 				config.logger.info("Received Decision:" + m.toString());
