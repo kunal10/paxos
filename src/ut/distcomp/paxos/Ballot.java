@@ -1,8 +1,9 @@
 package ut.distcomp.paxos;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public class Ballot implements Comparable<Ballot> {
+public class Ballot implements Comparable<Ballot>, Serializable {
 	public Ballot(int value, int lId) {
 		super();
 		this.value = value;

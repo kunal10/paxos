@@ -1,7 +1,9 @@
 package ut.distcomp.paxos;
 
-public class Command {
-	public enum CommandType {
+import java.io.Serializable;
+
+public class Command implements Serializable{
+	public enum CommandType{
 		SEND_MSG,
 	};
 

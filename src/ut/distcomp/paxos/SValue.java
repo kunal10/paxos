@@ -1,8 +1,9 @@
 package ut.distcomp.paxos;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public class SValue {
+public class SValue implements Serializable{
 	public SValue(int slot, Command command) {
 		super();
 		this.slot = slot;

@@ -1,8 +1,9 @@
 package ut.distcomp.paxos;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public class PValue {
+public class PValue implements Serializable{
 	public PValue(Ballot ballot, SValue sValue) {
 		super();
 		this.ballot = ballot;
