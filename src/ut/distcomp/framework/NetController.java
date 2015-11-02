@@ -67,7 +67,6 @@ public class NetController {
 	private BlockingQueue<Message> clientQueue;
 	
 	public NetController(Config config, 
-			int numOfServers,
 			BlockingQueue<Message> leaderQueue, 
 			BlockingQueue<Message> replicaQueue, 
 			BlockingQueue<Message> acceptorQueue, 
@@ -81,7 +80,7 @@ public class NetController {
 		this.scoutQueue = scoutQueue;
 		this.heartbeatQueue = heartbeatQueue;
 		this.config = config;
-		this.numOfServers = numOfServers;
+		this.numOfServers = config.numOfServers;
 		inSockets = Collections.synchronizedList(new ArrayList<IncomingSock>());
 		listener = new ListenServer(config, 
 				inSockets,
@@ -245,9 +244,9 @@ public class NetController {
 		BlockingQueue<Message> replica = new LinkedBlockingQueue<Message>();
 		BlockingQueue<Message> heartbeat = new LinkedBlockingQueue<Message>();
 		
-		NetController p1_con = new NetController(p1, numOfServers, leader, 
+		NetController p1_con = new NetController(p1, leader, 
 				replica, acceptor, commander, scout, heartbeat);
-		NetController p2_con = new NetController(p2, numOfServers, leader, 
+		NetController p2_con = new NetController(p2, leader, 
 				replica, acceptor, commander, scout, heartbeat);
 		Message m = new Message(0,1);
 		p1_con.sendMsg(1, m);

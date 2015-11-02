@@ -14,12 +14,11 @@ import ut.distcomp.framework.NetController;
  */
 public class Server {
 	
-	public Server(int serverId, int numOfClients, int numOfServers, 
-			Config config) {
+	public Server(int serverId, Config config) {
 		super();
 		this.serverId = serverId;
-		this.numOfClients = numOfClients;
-		this.numOfServers = numOfServers;
+		this.numOfClients = config.numOfClients;
+		this.numOfServers = config.numOfServers;
 		this.config = config;
 		this.leaderQueue = new LinkedBlockingQueue<>();
 		this.replicaQueue = new LinkedBlockingQueue<>();
@@ -27,7 +26,7 @@ public class Server {
 		this.heartbeatQueue = new LinkedBlockingQueue<>();
 		this.commanderQueue = new LinkedBlockingQueue<>();
 		this.scoutQueue = new LinkedBlockingQueue<>();
-		this.nc = new NetController(config, numOfServers, leaderQueue, 
+		this.nc = new NetController(config, leaderQueue, 
 				replicaQueue, acceptorQueue, commanderQueue, scoutQueue, 
 				heartbeatQueue);
 	}

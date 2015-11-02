@@ -30,6 +30,8 @@ public class Config {
 	public Config(int procNum, int numServers, int numClients, String logfile) 
 			throws FileNotFoundException, IOException {
 		this.procNum = procNum;
+		this.numOfClients = numClients;
+		this.numOfServers = numServers;
 		this.numProcesses = numServers + numClients;
 		logger = Logger.getLogger("NetFramework" + procNum);
 		FileHandler fileHandler = new FileHandler(logfile);
@@ -72,7 +74,8 @@ public class Config {
 	public int numProcesses;
 	
 	/**
-	 * This hosts number (should correspond to array above).  Each host should have a different number.
+	 * This hosts number (should correspond to array above).  
+	 * Each host should have a different number.
 	 */
 	public int procNum;
 	
@@ -81,6 +84,17 @@ public class Config {
 	 * Verbosity can be restricted by raising level to WARN
 	 */
 	public Logger logger;
+	
+	/**
+	 * No of clients
+	 */
+	public int numOfClients;
+	
+	/**
+	 * Num of servers.
+	 */
+	public int numOfServers;
+	
 }
 
 class MyFormatter extends Formatter {

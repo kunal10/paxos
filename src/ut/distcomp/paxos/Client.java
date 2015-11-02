@@ -20,16 +20,11 @@ import ut.distcomp.paxos.Command.CommandType;
  */
 public class Client {
 
-	/*
-	 * TODO: A client should spawn a thread which keeps listening from all the
-	 * servers and updates the chat log when it gets a new response.
-	 */
-
-	public Client(int clientId, int numOfServers, Config config) {
+	public Client(int clientId, Config config) {
 		super();
 		this.chatLog = new ArrayList<>();
 		this.clientId = clientId;
-		this.numOfServers = numOfServers;
+		this.numOfServers = config.numOfServers;
 		this.clientQueue = new LinkedBlockingQueue<>();
 		this.config = config;
 		this.nc = new NetController(config, numOfServers, clientQueue);
