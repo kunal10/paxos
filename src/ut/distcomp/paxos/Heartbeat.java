@@ -23,6 +23,7 @@ public class Heartbeat extends Thread {
 		this.setLeaderToPrimary = setLeaderToPrimary;
 		exisitingTimers = new HashMap<>();
 		timer = new Timer();
+		timer2 = new Timer();
 		currentPlId = startPrimaryLeader;
 		primaryLeaderView = new int[config.numOfServers];
 		initializePrimaryView(startPrimaryLeader);
@@ -46,6 +47,7 @@ public class Heartbeat extends Thread {
 				}
 				Message m = new Message(serverId, dest);
 				m.setHeartBeatContent(primaryLeaderView[serverId]);
+				config.logger.info("Sending heartbeat to "+dest);
 				nc.sendMessageToServer(dest, m);
 			}
 		} catch (Exception e) {
@@ -66,6 +68,7 @@ public class Heartbeat extends Thread {
 			exisitingTimers.get(key).cancel();
 		}
 		timer.cancel();
+		timer2.cancel();
 		config.logger.info("Shut down timers");
 	}
 
@@ -102,6 +105,7 @@ public class Heartbeat extends Thread {
 				config.logger.info("Setting vote for new leader to " + 
 						primaryLeaderView[serverId]);
 				int newLeader = waitForMajorityToElectNewLeader();
+				//int newLeader = 1;
 				config.logger.info("Majority elected leader as " + newLeader);
 				primaryLeaderView[serverId] = newLeader;
 				currentPlId = newLeader;
@@ -162,7 +166,8 @@ public class Heartbeat extends Thread {
 			try {
 				sendHeartBeat();
 			} catch (Exception e) {
-				//e.printStackTrace();
+				e.printStackTrace();
+				//config.logger.log("", msg, thrown);
 			}
 		}
 	}
@@ -179,7 +184,7 @@ public class Heartbeat extends Thread {
 		// timer.cancel();
 		// TODO: Register timer threads for killing later.
 		tt = new SendHeartBeatTask();
-		timer.schedule(tt, 0, freq);
+		timer2.schedule(tt, 0, freq);
 		// Initialize all the timers to track heartbeat of other processes.
 		for (int i = 0; i < config.numOfServers; i++) {
 			if (i != serverId) {
@@ -213,6 +218,8 @@ public class Heartbeat extends Thread {
 		// config.logger.info(pId + " Adding timer for "+m.getSrc());
 		addTimerForServer((m.getSrc()));
 		primaryLeaderView[m.getSrc()] = m.getPrimary();
+		config.logger.info("Set the primary value of "+primaryLeaderView[m.getSrc()]+
+				" to "+m.getPrimary());
 	}
 
 	/**
@@ -223,6 +230,7 @@ public class Heartbeat extends Thread {
 	 * Timer to use for scheduling tasks.
 	 */
 	Timer timer;
+	Timer timer2;
 	// TimerTask to send heart beats
 	TimerTask tt;
 	final private Config config;

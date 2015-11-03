@@ -3,6 +3,7 @@ package ut.distcomp.paxos;
 import java.util.HashMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
 
 import ut.distcomp.framework.Config;
 import ut.distcomp.framework.NetController;
@@ -26,6 +27,7 @@ public class Server {
 		this.heartbeatQueue = new LinkedBlockingQueue<>();
 		this.commanderQueue = new HashMap<>();
 		this.scoutQueue = new HashMap<>();
+		this.setLeaderToPrimary = new SynchronousQueue<>();
 		this.nc = new NetController(config, leaderQueue, 
 				replicaQueue, acceptorQueue, commanderQueue, scoutQueue, 
 				heartbeatQueue);
