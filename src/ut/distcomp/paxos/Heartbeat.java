@@ -12,7 +12,8 @@ import ut.distcomp.framework.NetController;
 
 public class Heartbeat implements Runnable {
 
-	public Heartbeat(Config config, NetController nc, int serverId, int startPrimaryLeader,
+	public Heartbeat(Config config, NetController nc, int serverId, 
+			int startPrimaryLeader,
 			BlockingQueue<Boolean> setLeaderToPrimary) {
 		super();
 		this.config = config;
@@ -47,15 +48,16 @@ public class Heartbeat implements Runnable {
 				m.setHeartBeatContent(primaryLeaderView[serverId]);
 			}
 		} catch (Exception e) {
-			config.logger.log(Level.SEVERE, "Error in sending heartbeat : " + e.getMessage());
+			config.logger.log(Level.SEVERE, "Error in sending "
+					+ "heartbeat : " + e.getMessage());
 		}
 	}
 
-	public void shutDown(){
+	public void shutDown() {
 		killTimers();
 		clearQueues();
 	}
-	
+
 	private void killTimers() {
 		tt.cancel();
 		for (Integer key : exisitingTimers.keySet()) {
@@ -64,8 +66,8 @@ public class Heartbeat implements Runnable {
 		timer.cancel();
 		config.logger.info("Shut down timers");
 	}
-	
-	private void clearQueues(){
+
+	private void clearQueues() {
 		heartbeatQueue.clear();
 	}
 
@@ -91,18 +93,23 @@ public class Heartbeat implements Runnable {
 			primaryLeaderView[failedProcess] = -1;
 			if (failedProcess == currentPlId) {
 				config.logger.info("Detected death of current leader " + currentPlId);
-				primaryLeaderView[serverId] = (currentPlId + 1) % config.numOfServers;
-				config.logger.info("Setting vote for new leader to " + primaryLeaderView[serverId]);
+				primaryLeaderView[serverId] = 
+						(currentPlId + 1) % config.numOfServers;
+				config.logger.info("Setting vote for new leader to " + 
+						primaryLeaderView[serverId]);
 				int newLeader = waitForMajorityToElectNewLeader();
 				config.logger.info("Majority elected leader as " + newLeader);
 				primaryLeaderView[serverId] = newLeader;
 				currentPlId = newLeader;
 				if (newLeader == serverId) {
-					config.logger.info("The elected leader matches my server ID");
+					config.logger.info("The elected leader matches my "
+							+ "server ID");
 					if (setLeaderToPrimary.offer(true)) {
-						config.logger.info("Informed my leader to become primary leader");
+						config.logger.info("Informed my leader to become "
+								+ "primary leader");
 					} else {
-						config.logger.info("Wasnt able to communicate to my leader");
+						config.logger.info("Wasnt able to communicate to "
+								+ "my leader");
 					}
 				}
 
@@ -185,7 +192,8 @@ public class Heartbeat implements Runnable {
 		try {
 			m = heartbeatQueue.take();
 		} catch (InterruptedException e) {
-			config.logger.log(Level.SEVERE, "Error in waiting on heartbeat queue : " + e.getMessage());
+			config.logger.log(Level.SEVERE, "Error in waiting on heartbeat"
+					+ " queue : " + e.getMessage());
 			return;
 		}
 		// Disable the timer if a timer is running for that process.
