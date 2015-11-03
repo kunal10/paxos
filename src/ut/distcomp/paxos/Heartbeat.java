@@ -51,6 +51,24 @@ public class Heartbeat implements Runnable {
 		}
 	}
 
+	public void shutDown(){
+		killTimers();
+		clearQueues();
+	}
+	
+	private void killTimers() {
+		tt.cancel();
+		for (Integer key : exisitingTimers.keySet()) {
+			exisitingTimers.get(key).cancel();
+		}
+		timer.cancel();
+		config.logger.info("Shut down timers");
+	}
+	
+	private void clearQueues(){
+		heartbeatQueue.clear();
+	}
+
 	private void addTimerForServer(int i) {
 		try {
 			int delay = 1200;
@@ -70,6 +88,7 @@ public class Heartbeat implements Runnable {
 
 		@Override
 		public void run() {
+			primaryLeaderView[failedProcess] = -1;
 			if (failedProcess == currentPlId) {
 				config.logger.info("Detected death of current leader " + currentPlId);
 				primaryLeaderView[serverId] = (currentPlId + 1) % config.numOfServers;
@@ -177,6 +196,7 @@ public class Heartbeat implements Runnable {
 		// Add a new timer for the process which has sent a heartbeat
 		// config.logger.info(pId + " Adding timer for "+m.getSrc());
 		addTimerForServer((m.getSrc()));
+		primaryLeaderView[m.getSrc()] = m.getPrimary();
 	}
 
 	/**
