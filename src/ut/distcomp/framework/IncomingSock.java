@@ -7,6 +7,7 @@
 
 package ut.distcomp.framework;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
@@ -63,12 +64,28 @@ public class IncomingSock extends Thread {
 				Message msg = (Message) in.readObject();
 				addMessageToDestinationQueue(msg);
 				logger.info("\n\nReceived : "+msg.toString());
+			} 
+			catch(EOFException e){
+				logger.log(Level.SEVERE, "EOF Exception");
+				cleanShutdown();
 			} catch (IOException e) {
+				try {
+					in.close();
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 				e.printStackTrace();
 			} catch (ClassNotFoundException e) {
 				// TODO Auto-generated catch block
+				try {
+					in.close();
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 				e.printStackTrace();
-			}
+			} 
 		}
 
 		shutdown();

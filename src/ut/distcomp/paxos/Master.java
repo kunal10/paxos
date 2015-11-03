@@ -58,6 +58,7 @@ public class Master {
 				break;
 			case "crashServer":
 				nodeIndex = Integer.parseInt(inputLine[1]);
+				servers[nodeIndex].CrashServer();
 				/*
 				 * Immediately crash the server specified by nodeIndex
 				 */

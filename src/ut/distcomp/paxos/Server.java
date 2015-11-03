@@ -36,10 +36,17 @@ public class Server {
 	 */
 	public void CrashServer(){
 		nc.shutdown();
-		heartbeatThread.stop();
-		leaderThread.stop();
-		replicaThread.stop();
-		acceptorThread.stop();
+		heartbeatThread.shutDown();
+		killThread(heartbeatThread);
+		killThread(leaderThread);
+		killThread(replicaThread);
+		killThread(acceptorThread);
+	}
+	
+	private void killThread(Thread t){
+		if(t!=null){
+			t.stop();
+		}
 	}
 	
 	/**
@@ -53,8 +60,10 @@ public class Server {
 	 * Start the server.
 	 */
 	public void StartServer(){
-		replicaThread = new Thread(new Replica(config, nc, serverId));
+		replicaThread = new Thread(new Replica(config, nc, serverId, replicaQueue));
 		replicaThread.start();
+		heartbeatThread = (new Heartbeat(config, nc, serverId, 0, setLeaderToPrimary));
+		heartbeatThread.start();
 	}
 	
 	/**
@@ -101,7 +110,7 @@ public class Server {
 	/**
 	 * Reference to the heartbeat thread of this server.
 	 */
-	private Thread heartbeatThread;
+	private Heartbeat heartbeatThread;
 	/**
 	 * Reference to the leader queue of this server.
 	 */
@@ -127,5 +136,5 @@ public class Server {
 	 */
 	HashMap<Integer, BlockingQueue<Message>> scoutQueue;
 	
-	BlockingQueue<Boolean> SetLeaderToPrimary;
+	BlockingQueue<Boolean> setLeaderToPrimary;
 }

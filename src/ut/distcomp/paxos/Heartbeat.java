@@ -10,7 +10,7 @@ import java.util.logging.Level;
 import ut.distcomp.framework.Config;
 import ut.distcomp.framework.NetController;
 
-public class Heartbeat implements Runnable {
+public class Heartbeat extends Thread {
 
 	public Heartbeat(Config config, NetController nc, int serverId, 
 			int startPrimaryLeader,
@@ -46,6 +46,7 @@ public class Heartbeat implements Runnable {
 				}
 				Message m = new Message(serverId, dest);
 				m.setHeartBeatContent(primaryLeaderView[serverId]);
+				nc.sendMessageToServer(dest, m);
 			}
 		} catch (Exception e) {
 			config.logger.log(Level.SEVERE, "Error in sending "
@@ -54,6 +55,7 @@ public class Heartbeat implements Runnable {
 	}
 
 	public void shutDown() {
+		config.logger.info("Trying to kill heartbeat thread of "+serverId);
 		killTimers();
 		clearQueues();
 	}
@@ -90,6 +92,8 @@ public class Heartbeat implements Runnable {
 
 		@Override
 		public void run() {
+			config.logger.info("Detected death of "+failedProcess+" and "
+					+ "current primary is "+currentPlId);
 			primaryLeaderView[failedProcess] = -1;
 			if (failedProcess == currentPlId) {
 				config.logger.info("Detected death of current leader " + currentPlId);
@@ -158,7 +162,7 @@ public class Heartbeat implements Runnable {
 			try {
 				sendHeartBeat();
 			} catch (Exception e) {
-				e.printStackTrace();
+				//e.printStackTrace();
 			}
 		}
 	}
@@ -194,6 +198,10 @@ public class Heartbeat implements Runnable {
 		} catch (InterruptedException e) {
 			config.logger.log(Level.SEVERE, "Error in waiting on heartbeat"
 					+ " queue : " + e.getMessage());
+			return;
+		} catch (Exception e) {
+			config.logger.severe("Error in heartbeat queue wait :"
+					+e.getMessage());
 			return;
 		}
 		// Disable the timer if a timer is running for that process.

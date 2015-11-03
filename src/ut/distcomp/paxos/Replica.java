@@ -11,11 +11,11 @@ import ut.distcomp.framework.Config;
 import ut.distcomp.framework.NetController;
 
 public class Replica implements Runnable {
-	public Replica(Config config, NetController nc, int replicaId) {
+	public Replica(Config config, NetController nc, int replicaId, BlockingQueue<Message> q) {
 		super();
 		this.config = config;
 		this.nc = nc;
-		this.queue = nc.getReplicaQueue();
+		this.queue = q;
 		this.replicaId = replicaId;
 		this.slotNum = 0;
 		this.state = new ArrayList<String>();
@@ -34,6 +34,9 @@ public class Replica implements Runnable {
 			try {
 				m = queue.take();
 			} catch (InterruptedException e) {
+				config.logger.severe(e.getMessage());
+				continue;
+			} catch (Exception e) {
 				config.logger.severe(e.getMessage());
 				continue;
 			}
