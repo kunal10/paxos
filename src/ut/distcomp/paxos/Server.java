@@ -126,4 +126,6 @@ public class Server {
 	 * Reference to list of scout queues.
 	 */
 	HashMap<Integer, BlockingQueue<Message>> scoutQueue;
+	
+	BlockingQueue<Boolean> SetLeaderToPrimary;
 }
