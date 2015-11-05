@@ -117,11 +117,17 @@ public class Replica implements Runnable {
 			slotNum++;
 			return;
 		}
-		state.add(c.getInput());
+		// Add the client ID with the message so that you can print in the 
+		// original sender at client
+		state.add(c.getClientId() + ": " + c.getInput());
 		slotNum++;
-		Message msg = new Message(replicaId, c.getClientId());
-		msg.setResponseContent(c, state);
-		nc.sendMessageToClient(c.getClientId(), msg);
+		// Broadcast the message to all clients
+		for(int i = 0; i < config.numOfClients; i++ ){
+			Message msg = new Message(replicaId, i);
+			msg.setResponseContent(c, state);
+			nc.sendMessageToClient(i, msg);
+		}
+		
 	}
 	
 	// Returns smallest slot number for which given command was decided.
