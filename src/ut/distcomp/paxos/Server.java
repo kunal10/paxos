@@ -65,20 +65,33 @@ public class Server {
 	/**
 	 * Revive a server.
 	 */
-	public void RestartServer() {
-		// Sleep for sometime ?
+	public void RestartServer(){
 		initializeServerThreads();
 		recoverServerState();
 		startServerThreads();
-		// Retrieve state for acceptor.
-		// Retrieve a vote for the heartbeat thread.
-		// Clear Queues ?
-		// Start all the threads with required states.
 	}
 
 	// Retrieve state for Replica.
-	private void recoverServerState() {
+	private void recoverServerState(){
+		try {
+			Thread.sleep(Config.QueueTimeoutVal);
+		} catch (InterruptedException e) {
+		}
+		// Retrieve state for replica.
 		replicaThread.recover();
+		// Retrieve state for acceptor.
+		acceptorThread.recover();
+		// Retrieve a vote for the heartbeat thread.
+		heartbeatThread.recover();
+		// TODO: Send all messages from replica to leader ?
+		// TODO: Clear Queues ?
+		/* TODO: To make this asynchronous : 
+		 * All the threads should have a variable called recovery to be set. 
+		 * If set they call the recover function on start of the thread. 
+		 * Also there is a state maintained in the server IsRecovering which 
+		 * should be set to false once all threads have recovered. 
+		 * This state should be used by allclear in blocking
+		 * */ 
 	}
 
 	private void initializeServerThreads() {
