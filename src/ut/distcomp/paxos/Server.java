@@ -1,12 +1,14 @@
 package ut.distcomp.paxos;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 
 import ut.distcomp.framework.Config;
 import ut.distcomp.framework.NetController;
+import ut.distcomp.paxos.Message.NodeType;
 
 /**
  * 
@@ -14,7 +16,7 @@ import ut.distcomp.framework.NetController;
  *
  */
 public class Server {
-	
+
 	public Server(int serverId, Config config) {
 		super();
 		this.serverId = serverId;
@@ -28,8 +30,8 @@ public class Server {
 		this.commanderQueue = new HashMap<>();
 		this.scoutQueue = new HashMap<>();
 		this.setLeaderToPrimary = new SynchronousQueue<>();
-		this.nc = new NetController(config, leaderQueue, 
-				replicaQueue, acceptorQueue, commanderQueue, scoutQueue, 
+		this.nc = new NetController(config, leaderQueue, replicaQueue, 
+				acceptorQueue, commanderQueue, scoutQueue,
 				heartbeatQueue);
 		this.aliveSet = new int[config.numOfServers];
 	}
@@ -37,7 +39,7 @@ public class Server {
 	/**
 	 * Kill all threads and exit.
 	 */
-	public void CrashServer(){
+	public void CrashServer() {
 		nc.shutdown();
 		heartbeatThread.shutDown();
 		killThread(heartbeatThread);
@@ -45,41 +47,61 @@ public class Server {
 		killThread(replicaThread);
 		killThread(acceptorThread);
 	}
-	
-	private void killThread(Thread t){
-		if(t!=null){
+
+	private void killThread(Thread t) {
+		if (t != null) {
 			t.stop();
 		}
 	}
-	
-	/**
-	 * Revive a server.
-	 */
-	public void RestartServer(){
-		
-	}
-	
+
 	/**
 	 * Start the server.
 	 */
-	public void StartServer(){
-		replicaThread = new Thread(new Replica(config, nc, serverId, 
-				replicaQueue));
+	public void StartServer() {
+		initializeServerThreads();
+		startServerThreads();
+	}
+
+	/**
+	 * Revive a server.
+	 */
+	public void RestartServer() {
+		// Sleep for sometime ?
+		initializeServerThreads();
+		recoverServerState();
+		startServerThreads();
+		// Retrieve state for acceptor.
+		// Retrieve a vote for the heartbeat thread.
+		// Clear Queues ?
+		// Start all the threads with required states.
+	}
+
+	// Retrieve state for Replica.
+	private void recoverServerState() {
+		replicaThread.recover();
+	}
+
+	private void initializeServerThreads() {
+		replicaThread = new Replica(config, nc, serverId, replicaQueue);
+		heartbeatThread = new Heartbeat(config, nc, serverId, 0, 
+				setLeaderToPrimary, aliveSet);
+	}
+
+	private void startServerThreads() {
 		replicaThread.start();
-		heartbeatThread = (new Heartbeat(config, nc, serverId, 0, 
-				setLeaderToPrimary, aliveSet));
 		heartbeatThread.start();
 	}
-	
+
 	/**
-	 * Kill the server after specified no of messages if you are currently the 
+	 * Kill the server after specified no of messages if you are currently the
 	 * primary leader.
+	 * 
 	 * @param n
 	 */
-	public void timeBombLeader(int n){
-		
+	public void timeBombLeader(int n) {
+
 	}
-	
+
 	/**
 	 * Server Id of this server instance.
 	 */
@@ -103,15 +125,15 @@ public class Server {
 	/**
 	 * Reference to the leader thread of this server.
 	 */
-	private Thread leaderThread;
+	private Leader leaderThread;
 	/**
 	 * Reference to the replica thread of this server.
 	 */
-	private Thread replicaThread;
+	private Replica replicaThread;
 	/**
 	 * Reference to the acceptor thread of this server.
 	 */
-	private Thread acceptorThread;
+	private Acceptor acceptorThread;
 	/**
 	 * Reference to the heartbeat thread of this server.
 	 */
@@ -140,8 +162,8 @@ public class Server {
 	 * Reference to list of scout queues.
 	 */
 	HashMap<Integer, BlockingQueue<Message>> scoutQueue;
-	
+
 	BlockingQueue<Boolean> setLeaderToPrimary;
-	
+
 	int[] aliveSet;
 }

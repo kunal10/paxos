@@ -5,6 +5,6 @@ package ut.distcomp.paxos;
  * Sequentially send proposals to the acceptors.
  * Takes care of the ballot no to be used while proposing to the acceptor.
  */
-public class Leader {
+public class Leader extends Thread{
 
 }
