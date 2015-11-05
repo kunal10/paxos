@@ -33,26 +33,29 @@ public class Replica extends Thread {
 			if (i != replicaId) {
 				Message m = new Message(replicaId, i);
 				m.setStateRequestContent(NodeType.REPLICA);
-				nc.sendMessageToServer(i, m);
-				try {
-					Message recoverMsg = queue.poll(Config.QueueTimeoutVal, 
-							TimeUnit.MILLISECONDS);
-					if (recoverMsg != null) {
-						if (recoverMsg.getMsgType() == MessageType.STATE_RES) {
-							decisions = recoverMsg.getDecisions();
-							proposals = recoverMsg.getProposals();
+				if(nc.sendMessageToServer(i, m)){
+					try {
+						/*Message recoverMsg = queue.poll(Config.QueueTimeoutVal, 
+								TimeUnit.MILLISECONDS);*/
+						Message recoverMsg = queue.take();
+						if (recoverMsg != null) {
+							if (recoverMsg.getMsgType() == MessageType.STATE_RES) {
+								decisions = recoverMsg.getDecisions();
+								proposals = recoverMsg.getProposals();
+								break;
+							} else {
+								config.logger.info("Received non state response :"
+										+ "" + recoverMsg.toString());
+							}
 						} else {
-							config.logger.info("Received non state response :"
-									+ "" + recoverMsg.toString());
+							config.logger.info("Timed out on " + i + 
+									" while retriving replica state");
 						}
-					} else {
-						config.logger.info("Timed out on " + i + 
-								" while retriving replica state");
-					}
 
-				} catch (InterruptedException e) {
-					config.logger.severe("Interrupted while receiving "
-							+ "replica state");
+					} catch (InterruptedException e) {
+						config.logger.severe("Interrupted while receiving "
+								+ "replica state");
+					}
 				}
 			}
 		}
@@ -80,7 +83,8 @@ public class Replica extends Thread {
 				Message response = new Message(replicaId, m.getSrc());
 				response.setStateResponseContent(NodeType.REPLICA, decisions, 
 						proposals);
-				nc.sendMessageToServer(response.getDest(), response);
+				config.logger.info("Sending Response msg:" + response.toString());
+				nc.sendMessageToServer(m.getSrc(), response);
 				break;
 			case REQUEST:
 				config.logger.info("Received Request:" + m.toString());

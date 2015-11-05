@@ -66,9 +66,13 @@ public class Server {
 	 * Revive a server.
 	 */
 	public void RestartServer(){
+		config.logger.info("Recovering..");
 		initializeServerThreads();
+		config.logger.info("Initialize Threads");
 		recoverServerState();
+		config.logger.info("Set recovered state");
 		startServerThreads();
+		config.logger.info("Start Threads");
 	}
 
 	// Retrieve state for Replica.
@@ -79,10 +83,13 @@ public class Server {
 		}
 		// Retrieve state for replica.
 		replicaThread.recover();
+		config.logger.info("Retrived state for replica");
 		// Retrieve state for acceptor.
 		acceptorThread.recover();
+		config.logger.info("Retrived state for acceptor");
 		// Retrieve a vote for the heartbeat thread.
 		heartbeatThread.recover();
+		config.logger.info("Retrived state for heartbeat");
 		// TODO: Send all messages from replica to leader ?
 		// TODO: Clear Queues ?
 		/* TODO: To make this asynchronous : 
@@ -96,6 +103,7 @@ public class Server {
 
 	private void initializeServerThreads() {
 		replicaThread = new Replica(config, nc, serverId, replicaQueue);
+		acceptorThread = new Acceptor(config, nc, serverId);
 		heartbeatThread = new Heartbeat(config, nc, serverId, 0, 
 				setLeaderToPrimary, aliveSet);
 	}
@@ -103,6 +111,7 @@ public class Server {
 	private void startServerThreads() {
 		replicaThread.start();
 		heartbeatThread.start();
+		acceptorThread.start();
 	}
 	
 	public boolean IsServerAlive(){

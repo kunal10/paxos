@@ -74,13 +74,13 @@ public class Message implements Serializable {
 			return;
 		}
 		srcType = nt;
-		destType = NodeType.REPLICA;
+		destType = nt;
 		msgType = MessageType.STATE_REQ;
 	}
 	
 	public void setStateResponseContent(NodeType nt, Set<SValue> d, 
 			Set<SValue> p) {
-		if (nt == NodeType.REPLICA) {
+		if (!(nt == NodeType.REPLICA)) {
 			// TODO : Add Log(Severe)
 			return;
 		}
@@ -92,7 +92,7 @@ public class Message implements Serializable {
 	}
 	
 	public void setStateResponseContent(NodeType nt, Set<PValue> a, Ballot b){
-		if (nt == NodeType.ACCEPTOR) {
+		if (!(nt == NodeType.ACCEPTOR)) {
 			// TODO : Add Log(Severe)
 			return;
 		}

@@ -46,8 +46,10 @@ public class Heartbeat extends Thread {
 	}
 	
 	public void recover(){
+		config.logger.info("Retriving heartbeat..");
 		try {
 			Message m = heartbeatQueue.take();
+			config.logger.info("Retriving heartbeat from "+m.toString());
 			// Just adopt a value from any heartbeat.
 			primaryLeaderView[serverId]  = m.getPrimary(); 
 		} catch (InterruptedException e) {

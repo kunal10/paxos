@@ -69,6 +69,7 @@ public class Master {
 				break;
 			case "restartServer":
 				nodeIndex = Integer.parseInt(inputLine[1]);
+				servers[nodeIndex] = null;
 				servers[nodeIndex] = initializeSingleServer(nodeIndex, numNodes, numClients);
 				servers[nodeIndex].RestartServer();
 				/*

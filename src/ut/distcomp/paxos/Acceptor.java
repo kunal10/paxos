@@ -20,25 +20,32 @@ public class Acceptor extends Thread {
 		this.queue = nc.getAcceptorQueue();
 		this.acceptorId = acceptorId;
 		this.accepted = new HashSet<PValue>();
+		this.ballot = new Ballot(-1, -1);
 	}
 
 	// Interacts with other replicas to recover the lost state.
 	public void recover() {
 		for (int i = 0; i < config.numOfServers; i++) {
-			Message m = new Message(acceptorId, i);
-			m.setStateRequestContent(NodeType.ACCEPTOR);
-			if (nc.sendMessageToServer(i, m)) {
-				try {
-					Message recoverMessage = queue.take();
-					Ballot b = recoverMessage.getBallot();
-					// Build a increasing set while recovery.
-					if (b.compareTo(ballot) > 0) {
-						ballot = b;
-						accepted = recoverMessage.getAccepted();
-					}
+			if(i != acceptorId){
+				Message m = new Message(acceptorId, i);
+				m.setStateRequestContent(NodeType.ACCEPTOR);
+				if (nc.sendMessageToServer(i, m)) {
+					try {
+						Message recoverMessage = queue.take();
+						config.logger.info("Received a acceptor recovery message "
+								+ ""+recoverMessage.toString());
+						Ballot b = recoverMessage.getBallot();
+						config.logger.info("Received Ballot : "+b.toString());
+						// Build a increasing set while recovery.
+						if (b.compareTo(ballot) > 0) {
+							ballot = b;
+							accepted = recoverMessage.getAccepted();
+						}
 
-				} catch (InterruptedException e) {
-					config.logger.severe("Interrupted while waiting for " + "acceptor recovery");
+					} catch (InterruptedException e) {
+						config.logger.severe("Interrupted while waiting for "
+								+ "" + "acceptor recovery");
+					}
 				}
 			}
 		}
@@ -49,12 +56,10 @@ public class Acceptor extends Thread {
 			Message m = null;
 			try {
 				m = queue.take();
-			} catch (InterruptedException e) {
+			} catch (Exception e) {
 				config.logger.severe(e.getMessage());
 				continue;
 			}
-			Ballot b = m.getBallot();
-			Message msg = new Message(acceptorId, b.getlId());
 			switch (m.getMsgType()) {
 			case STATE_RES:
 				config.logger.info("Ignoring Received STATE_RES msg:" + m.toString());
@@ -68,6 +73,8 @@ public class Acceptor extends Thread {
 				nc.sendMessageToServer(m.getSrc(), response);
 				break;
 			case P1A:
+				Ballot b = m.getBallot();
+				Message msg = new Message(acceptorId, b.getlId());
 				config.logger.info("Received P1A msg:" + m.toString());
 				if (b != null && b.compareTo(ballot) == 1) {
 					ballot = b;
@@ -77,14 +84,16 @@ public class Acceptor extends Thread {
 				nc.sendMessageToServer(b.getlId(), msg);
 				break;
 			case P2A:
+				Ballot b2 = m.getBallot();
+				Message msg2 = new Message(acceptorId, b2.getlId());
 				config.logger.info("Received P2A msg:" + m.toString());
-				if (b != null && b.compareTo(ballot) >= 0) {
-					ballot = b;
-					accepted.add(new PValue(ballot, msg.getsValue()));
+				if (b2 != null && b2.compareTo(ballot) >= 0) {
+					ballot = b2;
+					accepted.add(new PValue(ballot, msg2.getsValue()));
 				}
-				msg.setP2BContent(ballot, m.getThreadId());
-				config.logger.info("Sending P2A msg:" + msg.toString());
-				nc.sendMessageToServer(b.getlId(), msg);
+				msg2.setP2BContent(ballot, m.getThreadId());
+				config.logger.info("Sending P2A msg:" + msg2.toString());
+				nc.sendMessageToServer(b2.getlId(), msg2);
 				break;
 			default:
 				config.logger.severe("Received Unexpected Msg" + m.toString());
