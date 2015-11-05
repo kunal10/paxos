@@ -1,12 +1,14 @@
 package ut.distcomp.paxos;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 
 import ut.distcomp.framework.Config;
 import ut.distcomp.framework.NetController;
+import ut.distcomp.paxos.Message.NodeType;
 
 /**
  * 
@@ -52,19 +54,39 @@ public class Server {
 	}
 	
 	/**
-	 * Revive a server.
-	 */
-	public void RestartServer(){
-		
-	}
-	
-	/**
 	 * Start the server.
 	 */
 	public void StartServer(){
-		replicaThread = new Thread(new Replica(config, nc, serverId, replicaQueue));
+		initializeServerThreads();
+		startServerThreads();
+	}
+	
+	/**
+	 * Revive a server.
+	 */
+	public void RestartServer(){
+		// Sleep for sometime ?
+		initializeServerThreads();
+		recoverServerState();
+		startServerThreads();
+		// Retrieve state for acceptor.
+		// Retrieve a vote for the heartbeat thread.
+		// Clear Queues ?
+		// Start all the threads with required states.
+	}
+
+	// Retrieve state for Replica.
+	private void recoverServerState(){
+		replicaThread.recover();
+	}
+	
+	private void initializeServerThreads(){
+		replicaThread = new Replica(config, nc, serverId, replicaQueue);
+		heartbeatThread = new Heartbeat(config, nc, serverId, 0, setLeaderToPrimary);
+	}
+	
+	private void startServerThreads(){
 		replicaThread.start();
-		heartbeatThread = (new Heartbeat(config, nc, serverId, 0, setLeaderToPrimary));
 		heartbeatThread.start();
 	}
 	
@@ -100,15 +122,15 @@ public class Server {
 	/**
 	 * Reference to the leader thread of this server.
 	 */
-	private Thread leaderThread;
+	private Leader leaderThread;
 	/**
 	 * Reference to the replica thread of this server.
 	 */
-	private Thread replicaThread;
+	private Replica replicaThread;
 	/**
 	 * Reference to the acceptor thread of this server.
 	 */
-	private Thread acceptorThread;
+	private Acceptor acceptorThread;
 	/**
 	 * Reference to the heartbeat thread of this server.
 	 */

@@ -2,6 +2,7 @@ package ut.distcomp.paxos;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
 import java.util.Scanner;
 
 import ut.distcomp.framework.Config;
@@ -13,7 +14,7 @@ public class Master {
 
 	public static void main(String[] args) {
 		Scanner scan = new Scanner(System.in);
-		int numNodes, numClients;
+		int numNodes = 0, numClients = 0;
 
 		while (scan.hasNextLine()) {
 			String[] inputLine = scan.nextLine().split(" ");
@@ -44,6 +45,7 @@ public class Master {
 				break;
 			case "printChatLog":
 				clientIndex = Integer.parseInt(inputLine[1]);
+				printChatlog(clientIndex);
 				/*
 				 * Print out the client specified by clientIndex's chat history
 				 * in the format described on the handout.
@@ -55,6 +57,7 @@ public class Master {
 				 * come to consensus in PAXOS do, and that all clients have
 				 * heard of them
 				 */
+				allClear();
 				break;
 			case "crashServer":
 				nodeIndex = Integer.parseInt(inputLine[1]);
@@ -65,6 +68,9 @@ public class Master {
 				break;
 			case "restartServer":
 				nodeIndex = Integer.parseInt(inputLine[1]);
+				servers[nodeIndex] = initializeSingleServer(nodeIndex, 
+						numNodes, numClients);
+				servers[nodeIndex].RestartServer();
 				/*
 				 * Restart the server specified by nodeIndex
 				 */
@@ -78,6 +84,23 @@ public class Master {
 				break;
 			}
 		}
+	}
+
+	private static void printChatlog(int clientIndex) {
+		List<String> chatLog = clients[clientIndex].getChatLog();
+		for (String message : chatLog) {
+			System.out.println(message);
+		}
+	}
+
+	private static void allClear() {
+		// TODO 
+		// Check if there is anything being revived, if so then wait
+		// Check if there is majority 
+		//	If majority then check if all clients have received all responses
+		//	Else wait 
+		// If minority return
+		
 	}
 
 	private static void startServers() {
@@ -101,12 +124,18 @@ public class Master {
 	private static void initializeServers(int numServers, int numClients) {
 		servers = new Server[numServers];
 		for (int i = 0; i < numServers; i++) {
-			try {
-				servers[i] = new Server(i, new Config(i, numServers, numClients,
-						"LogServer"+i+".txt"));
-			} catch (IOException e) {
-				//e.printStackTrace();
-			}
+			servers[i] = initializeSingleServer(i, numServers, numClients);
 		}
+	}
+	
+	private static Server initializeSingleServer(int serverId, int numServers, 
+			int numClients){
+		try {
+			return new Server(serverId, new Config(serverId, numServers, 
+					numClients,"LogServer"+serverId+".txt"));
+		} catch (IOException e) {
+			
+		}
+		return null;
 	}
 }

@@ -6,11 +6,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import ut.distcomp.framework.Config;
 import ut.distcomp.framework.NetController;
+import ut.distcomp.paxos.Message.MessageType;
+import ut.distcomp.paxos.Message.NodeType;
 
-public class Replica implements Runnable {
+public class Replica extends Thread {
 	public Replica(Config config, NetController nc, int replicaId, BlockingQueue<Message> q) {
 		super();
 		this.config = config;
@@ -25,7 +28,29 @@ public class Replica implements Runnable {
 
 	// Interacts with other replicas to recover the lost state.
 	public void recover() {
-		// TODO : Implement this.
+		for (int i = 0; i < config.numOfServers; i++) {
+			if (i != replicaId) {
+				Message m = new Message(replicaId, i);
+				m.setStateRequestContent(NodeType.REPLICA);
+				nc.sendMessageToServer(i, m);
+				try {
+					Message recoverMsg = queue.poll(Config.QueueTimeoutVal, TimeUnit.MILLISECONDS);
+					if (recoverMsg != null) {
+						if (recoverMsg.getMsgType() == MessageType.STATE_RES) {
+							decisions = recoverMsg.getDecisions();
+							proposals = recoverMsg.getProposals();
+						} else {
+							config.logger.info("Received non state response :" + recoverMsg.toString());
+						}
+					} else {
+						config.logger.info("Timed out on " + i + " while retriving replica state");
+					}
+
+				} catch (InterruptedException e) {
+					config.logger.severe("Interrupted while receiving replica state");
+				}
+			}
+		}
 	}
 
 	public void run() {
@@ -41,12 +66,21 @@ public class Replica implements Runnable {
 				continue;
 			}
 			switch (m.getMsgType()) {
+			case STATE_RES:
+				config.logger.info("Received State Response:" + m.toString());
+				config.logger.info("This will be ignored. T"
+						+ "he first message received is already consumed");
+			case STATE_REQ:
+				config.logger.info("Received State Request:" + m.toString());
+				Message response = new Message(replicaId, m.getSrc());
+				response.setStateResponseContent(NodeType.REPLICA, decisions, proposals);
+				nc.sendMessageToServer(response.getDest(), response);
+				break;
 			case REQUEST:
 				config.logger.info("Received Request:" + m.toString());
 				Command command = m.getCommand();
 				if (command == null) {
-					config.logger.severe("Received invalid request: " +
-							m.toString());
+					config.logger.severe("Received invalid request: " + m.toString());
 					break;
 				}
 				propose(m.getCommand());
@@ -56,16 +90,14 @@ public class Replica implements Runnable {
 				// Add decision to decisions.
 				SValue decision = m.getsValue();
 				if (decision == null) {
-					config.logger.severe("Received decision without svalue: " +
-							m.toString());
+					config.logger.severe("Received decision without svalue: " + m.toString());
 					break;
 				}
 				decisions.add(decision);
 				// Find decision for current slot.
 				SValue p1 = getDecisionForSlot(slotNum);
 				while (p1 != null) {
-					config.logger.info("Found decision for slot:" + 
-							p1.getSlot());
+					config.logger.info("Found decision for slot:" + p1.getSlot());
 					Command p1c = p1.getCommand();
 					// If you had proposed a command for current slot and it was
 					// not decided then re-propose it.
@@ -73,8 +105,7 @@ public class Replica implements Runnable {
 					if (p2 != null) {
 						Command p2c = p2.getCommand();
 						if (p2c != null && !p1c.equals(p2c)) {
-							config.logger.info("Re-proposing previous proposal:"
-									+ p2c.toString());
+							config.logger.info("Re-proposing previous proposal:" + p2c.toString());
 							propose(p2c);
 						}
 					}
@@ -117,24 +148,24 @@ public class Replica implements Runnable {
 			slotNum++;
 			return;
 		}
-		// Add the client ID with the message so that you can print in the 
+		// Add the client ID with the message so that you can print in the
 		// original sender at client
 		state.add(c.getClientId() + ": " + c.getInput());
 		slotNum++;
 		// Broadcast the message to all clients
-		for(int i = 0; i < config.numOfClients; i++ ){
+		for (int i = 0; i < config.numOfClients; i++) {
 			Message msg = new Message(replicaId, i);
 			msg.setResponseContent(c, state);
 			nc.sendMessageToClient(i, msg);
 		}
-		
+
 	}
-	
+
 	// Returns smallest slot number for which given command was decided.
 	// Returns -1 it the command has not been decided.
 	private int getEarliestDecidedSlot(Command c) {
-		if (c == null) { 
-			return -1; 
+		if (c == null) {
+			return -1;
 		}
 		for (SValue decision : decisions) {
 			Command decided = decision.getCommand();
@@ -144,7 +175,7 @@ public class Replica implements Runnable {
 		}
 		return -1;
 	}
-	
+
 	// Returns SValue for slot if its decided, null otherwise.
 	private SValue getDecisionForSlot(int slot) {
 		for (SValue sv : decisions) {
@@ -154,7 +185,7 @@ public class Replica implements Runnable {
 		}
 		return null;
 	}
-	
+
 	// Returns proposed SValue for slot if it exists, null otherwise.
 	private SValue getProposalForSlot(int slot) {
 		for (SValue sv : proposals) {
@@ -164,8 +195,8 @@ public class Replica implements Runnable {
 		}
 		return null;
 	}
-	
-	// Returns the lowest slot number which is not present in the set of 
+
+	// Returns the lowest slot number which is not present in the set of
 	// proposals union decisions.
 	private int getNextFreeSlot() {
 		ArrayList<Integer> slots = new ArrayList<Integer>();
@@ -177,7 +208,7 @@ public class Replica implements Runnable {
 		}
 		Collections.sort(slots);
 		// Iterate and find lowest available slot.
-		int nextSlot = 0; 
+		int nextSlot = 0;
 		for (Integer slot : slots) {
 			if (slot > nextSlot) {
 				break;
