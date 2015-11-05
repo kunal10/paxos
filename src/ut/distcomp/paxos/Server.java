@@ -31,6 +31,7 @@ public class Server {
 		this.nc = new NetController(config, leaderQueue, 
 				replicaQueue, acceptorQueue, commanderQueue, scoutQueue, 
 				heartbeatQueue);
+		this.aliveSet = new int[config.numOfServers];
 	}
 
 	/**
@@ -62,9 +63,11 @@ public class Server {
 	 * Start the server.
 	 */
 	public void StartServer(){
-		replicaThread = new Thread(new Replica(config, nc, serverId, replicaQueue));
+		replicaThread = new Thread(new Replica(config, nc, serverId, 
+				replicaQueue));
 		replicaThread.start();
-		heartbeatThread = (new Heartbeat(config, nc, serverId, 0, setLeaderToPrimary));
+		heartbeatThread = (new Heartbeat(config, nc, serverId, 0, 
+				setLeaderToPrimary, aliveSet));
 		heartbeatThread.start();
 	}
 	
@@ -139,4 +142,6 @@ public class Server {
 	HashMap<Integer, BlockingQueue<Message>> scoutQueue;
 	
 	BlockingQueue<Boolean> setLeaderToPrimary;
+	
+	int[] aliveSet;
 }

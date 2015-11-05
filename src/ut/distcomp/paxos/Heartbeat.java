@@ -14,7 +14,8 @@ public class Heartbeat extends Thread {
 
 	public Heartbeat(Config config, NetController nc, int serverId, 
 			int startPrimaryLeader,
-			BlockingQueue<Boolean> setLeaderToPrimary) {
+			BlockingQueue<Boolean> setLeaderToPrimary,
+			int[] primaryLeaderView) {
 		super();
 		this.config = config;
 		this.nc = nc;
@@ -25,10 +26,15 @@ public class Heartbeat extends Thread {
 		timer = new Timer();
 		timer2 = new Timer();
 		currentPlId = startPrimaryLeader;
-		primaryLeaderView = new int[config.numOfServers];
+		this.primaryLeaderView = primaryLeaderView;
 		initializePrimaryView(startPrimaryLeader);
 	}
 
+	/**
+	 * Sets its own value to the given init value and others to -1. 
+	 * Constructs others view based on the heartbeats it receives
+	 * @param initValue
+	 */
 	private void initializePrimaryView(int initValue) {
 		for (int i = 0; i < config.numOfServers; i++) {
 			if (i == serverId) {
