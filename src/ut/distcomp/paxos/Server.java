@@ -104,6 +104,23 @@ public class Server {
 		replicaThread.start();
 		heartbeatThread.start();
 	}
+	
+	public boolean IsServerAlive(){
+		boolean isAlive = false;
+		if(heartbeatThread != null && replicaThread != null && 
+				leaderThread != null && acceptorThread != null){
+			isAlive = heartbeatThread.isAlive() && replicaThread.isAlive() && 
+					leaderThread.isAlive() && acceptorThread.isAlive();
+		}
+		return isAlive;
+	}
+	
+	public boolean IsServerExecutingProtocol(){
+		boolean isExecuting = false;
+		// TODO: check if there are any existing commander and scout threads.
+		// Return true is there are threads.
+		return isExecuting;
+	}
 
 	/**
 	 * Kill the server after specified no of messages if you are currently the
@@ -112,7 +129,7 @@ public class Server {
 	 * @param n
 	 */
 	public void timeBombLeader(int n) {
-
+		// TODO: Implement this.
 	}
 
 	/**

@@ -2,6 +2,7 @@ package ut.distcomp.paxos;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
@@ -57,7 +58,7 @@ public class Master {
 				 * come to consensus in PAXOS do, and that all clients have
 				 * heard of them
 				 */
-				allClear();
+				allClear(numNodes, numClients);
 				break;
 			case "crashServer":
 				nodeIndex = Integer.parseInt(inputLine[1]);
@@ -68,8 +69,7 @@ public class Master {
 				break;
 			case "restartServer":
 				nodeIndex = Integer.parseInt(inputLine[1]);
-				servers[nodeIndex] = initializeSingleServer(nodeIndex, 
-						numNodes, numClients);
+				servers[nodeIndex] = initializeSingleServer(nodeIndex, numNodes, numClients);
 				servers[nodeIndex].RestartServer();
 				/*
 				 * Restart the server specified by nodeIndex
@@ -93,14 +93,53 @@ public class Master {
 		}
 	}
 
-	private static void allClear() {
-		// TODO 
-		// Check if there is anything being revived, if so then wait
-		// Check if there is majority 
-		//	If majority then check if all clients have received all responses
-		//	Else wait 
-		// If minority return
+	private static void allClear(int numServers, int numClients) {
+		/*
+		 * TODO : Check if there is anything being revived, if so then wait.
+		 * Currently the call is blocking. So no additional code is required.
+		 */
+		List<Integer> aliveServers = getAliveServers(numServers);
+		waitForServersToFinishProtocol(aliveServers, numServers);
+		waitForAllClientsToBeServiced(numClients);
 		
+	}
+
+	private static void waitForAllClientsToBeServiced(int numClients){
+		// Check if all clients are serviced
+		for (int i = 0; i < numClients; i++) {
+			while (!clients[i].areAllCommandsExecuted()) {
+				// Do nothing while all clients have got decisions
+				// for all their commands.
+			}
+		}
+	}
+	
+	private static List<Integer> getAliveServers(int numServers) {
+		List<Integer> aliveServers = new ArrayList<>();
+		for (int i = 0; i < numServers; i++) {
+			if (servers[i].IsServerAlive()) {
+				aliveServers.add(i);
+			}
+		}
+		return aliveServers;
+	}
+
+	private static void waitForServersToFinishProtocol(List<Integer> aliveServers, 
+			int numServers) {
+		if (aliveServers.size() > (numServers / 2)) {
+			// There is a majority alive.
+			// Check whether all have completed protocol related messages.
+			for (Integer index : aliveServers) {
+				while (servers[index].IsServerAlive() && 
+						servers[index].IsServerExecutingProtocol()) {
+					// Do nothing till the server is executing protocol.
+				}
+			}
+		} else {
+			// There is a minority. Cannot continue with protocol.
+			return;
+		}
+
 	}
 
 	private static void startServers() {
@@ -113,8 +152,7 @@ public class Master {
 		clients = new Client[numClients];
 		for (int i = 0; i < numClients; i++) {
 			try {
-				clients[i] = new Client(i,new Config(i + numNodes, 
-						numNodes, numClients, "LogClient" + i + ".txt"));
+				clients[i] = new Client(i, new Config(i + numNodes, numNodes, numClients, "LogClient" + i + ".txt"));
 			} catch (IOException e) {
 
 			}
@@ -127,14 +165,12 @@ public class Master {
 			servers[i] = initializeSingleServer(i, numServers, numClients);
 		}
 	}
-	
-	private static Server initializeSingleServer(int serverId, int numServers, 
-			int numClients){
+
+	private static Server initializeSingleServer(int serverId, int numServers, int numClients) {
 		try {
-			return new Server(serverId, new Config(serverId, numServers, 
-					numClients,"LogServer"+serverId+".txt"));
+			return new Server(serverId, new Config(serverId, numServers, numClients, "LogServer" + serverId + ".txt"));
 		} catch (IOException e) {
-			
+
 		}
 		return null;
 	}
