@@ -14,7 +14,8 @@ import ut.distcomp.paxos.Message.MessageType;
 import ut.distcomp.paxos.Message.NodeType;
 
 public class Replica extends Thread {
-	public Replica(Config config, NetController nc, int replicaId, BlockingQueue<Message> q) {
+	public Replica(Config config, NetController nc, int replicaId, 
+			BlockingQueue<Message> q) {
 		super();
 		this.config = config;
 		this.nc = nc;
@@ -34,20 +35,24 @@ public class Replica extends Thread {
 				m.setStateRequestContent(NodeType.REPLICA);
 				nc.sendMessageToServer(i, m);
 				try {
-					Message recoverMsg = queue.poll(Config.QueueTimeoutVal, TimeUnit.MILLISECONDS);
+					Message recoverMsg = queue.poll(Config.QueueTimeoutVal, 
+							TimeUnit.MILLISECONDS);
 					if (recoverMsg != null) {
 						if (recoverMsg.getMsgType() == MessageType.STATE_RES) {
 							decisions = recoverMsg.getDecisions();
 							proposals = recoverMsg.getProposals();
 						} else {
-							config.logger.info("Received non state response :" + recoverMsg.toString());
+							config.logger.info("Received non state response :"
+									+ "" + recoverMsg.toString());
 						}
 					} else {
-						config.logger.info("Timed out on " + i + " while retriving replica state");
+						config.logger.info("Timed out on " + i + 
+								" while retriving replica state");
 					}
 
 				} catch (InterruptedException e) {
-					config.logger.severe("Interrupted while receiving replica state");
+					config.logger.severe("Interrupted while receiving "
+							+ "replica state");
 				}
 			}
 		}
@@ -73,14 +78,16 @@ public class Replica extends Thread {
 			case STATE_REQ:
 				config.logger.info("Received State Request:" + m.toString());
 				Message response = new Message(replicaId, m.getSrc());
-				response.setStateResponseContent(NodeType.REPLICA, decisions, proposals);
+				response.setStateResponseContent(NodeType.REPLICA, decisions, 
+						proposals);
 				nc.sendMessageToServer(response.getDest(), response);
 				break;
 			case REQUEST:
 				config.logger.info("Received Request:" + m.toString());
 				Command command = m.getCommand();
 				if (command == null) {
-					config.logger.severe("Received invalid request: " + m.toString());
+					config.logger.severe("Received invalid request: "
+							+ "" + m.toString());
 					break;
 				}
 				propose(m.getCommand());
@@ -90,14 +97,16 @@ public class Replica extends Thread {
 				// Add decision to decisions.
 				SValue decision = m.getsValue();
 				if (decision == null) {
-					config.logger.severe("Received decision without svalue: " + m.toString());
+					config.logger.severe("Received decision without svalue: "
+							+ "" + m.toString());
 					break;
 				}
 				decisions.add(decision);
 				// Find decision for current slot.
 				SValue p1 = getDecisionForSlot(slotNum);
 				while (p1 != null) {
-					config.logger.info("Found decision for slot:" + p1.getSlot());
+					config.logger.info("Found decision for slot:"
+							+ "" + p1.getSlot());
 					Command p1c = p1.getCommand();
 					// If you had proposed a command for current slot and it was
 					// not decided then re-propose it.
@@ -105,7 +114,8 @@ public class Replica extends Thread {
 					if (p2 != null) {
 						Command p2c = p2.getCommand();
 						if (p2c != null && !p1c.equals(p2c)) {
-							config.logger.info("Re-proposing previous proposal:" + p2c.toString());
+							config.logger.info("Re-proposing previous proposal:"
+									+ "" + p2c.toString());
 							propose(p2c);
 						}
 					}

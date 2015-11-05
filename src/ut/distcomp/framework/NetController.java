@@ -269,11 +269,9 @@ public class NetController {
 			p2 = new Config(1, numOfServers, numOfClients, "config_p1.txt");
 			
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 		
 		BlockingQueue<Message> leader = new LinkedBlockingQueue<Message>();
