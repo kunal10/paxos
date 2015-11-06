@@ -95,6 +95,8 @@ public class Config {
 	 */
 	public int numOfServers;
 	
+	public static final int QueueTimeoutVal = 1000;
+	
 }
 
 class MyFormatter extends Formatter {

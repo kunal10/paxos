@@ -74,13 +74,13 @@ public class Message implements Serializable {
 			return;
 		}
 		srcType = nt;
-		destType = NodeType.REPLICA;
+		destType = nt;
 		msgType = MessageType.STATE_REQ;
 	}
 	
 	public void setStateResponseContent(NodeType nt, Set<SValue> d, 
 			Set<SValue> p) {
-		if (nt != NodeType.ACCEPTOR && nt != NodeType.REPLICA) {
+		if (!(nt == NodeType.REPLICA)) {
 			// TODO : Add Log(Severe)
 			return;
 		}
@@ -89,6 +89,18 @@ public class Message implements Serializable {
 		msgType = MessageType.STATE_RES;
 		decisions = new HashSet<SValue>(d);
 		proposals = new HashSet<SValue>(p);
+	}
+	
+	public void setStateResponseContent(NodeType nt, Set<PValue> a, Ballot b){
+		if (!(nt == NodeType.ACCEPTOR)) {
+			// TODO : Add Log(Severe)
+			return;
+		}
+		srcType = NodeType.ACCEPTOR;
+		destType = nt;
+		msgType = MessageType.STATE_RES;
+		accepted = new HashSet<PValue>(a);
+		ballot = new Ballot(b);
 	}
 	
 	public void setProposeContent(int slot, Command c) {
@@ -263,6 +275,7 @@ public class Message implements Serializable {
 	
 	// Content specific fields.
 	// Present in ADOPTED, P1A, P2A, P1B, P2B and PRE_EMPTED messages.
+	// Also present in STATE_RES messages when coming from an acceptor
 	private Ballot ballot;
 	// Present in PROPOSE, DECISION and P2A messages.
 	private SValue sValue;
@@ -271,6 +284,7 @@ public class Message implements Serializable {
 	// Present in RESPONSE messages.
 	private List<String> output;
 	// Present in ADOPTED and P1B messages.
+	// Present in STATE_RES messages when coming from an acceptor
 	private Set<PValue> accepted;
 	// Present in STATE_RES messages.
 	private Set<SValue> proposals;

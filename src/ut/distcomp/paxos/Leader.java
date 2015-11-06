@@ -1,5 +1,7 @@
 package ut.distcomp.paxos;
 
+
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -8,7 +10,7 @@ import java.util.concurrent.BlockingQueue;
 import ut.distcomp.framework.Config;
 import ut.distcomp.framework.NetController;
 
-public class Leader {
+public class Leader extends Thread {
 	public Leader(Config config, NetController nc, int leaderId) {
 		super();
 		this.config = config;
