@@ -1,10 +1,38 @@
 package ut.distcomp.paxos;
-/**
- * Executes the functionality of a Leader.
- * In active mode, it spawns Commanders and Scouts
- * Sequentially send proposals to the acceptors.
- * Takes care of the ballot no to be used while proposing to the acceptor.
- */
-public class Leader {
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+
+import ut.distcomp.framework.Config;
+import ut.distcomp.framework.NetController;
+
+public class Leader {
+	public Leader(Config config, NetController nc, int leaderId) {
+		super();
+		this.config = config;
+		this.nc = nc;
+		this.queue = nc.getAcceptorQueue();
+		this.leaderId = leaderId;
+		this.active = false;
+		this.proposals = new HashSet<SValue>();
+		this.scouts = new HashMap<Integer, Scout>();
+		this.commanders = new HashMap<Integer, Commander>();
+		this.ballot = new Ballot(0,leaderId);
+	}
+	
+	public void run() {
+		Scout scout = new Scout(config, nc, leaderId, ballot);
+	}
+	
+	private int leaderId;
+	private boolean active;
+	private Ballot ballot;
+	private Set<SValue> proposals;
+	private HashMap<Integer, Scout> scouts;
+	private HashMap<Integer, Commander> commanders;
+	private BlockingQueue<Message> queue;
+	private NetController nc;
+	private Config config;
 }
