@@ -22,6 +22,10 @@ public class Ballot implements Comparable<Ballot>, Serializable {
 		return lId;
 	}
 	
+	public void setValue(int val) {
+		value = val;
+	}
+	
 	public String toString() {
 	    StringBuilder result = new StringBuilder();
 	    result.append("\nValue:" + value);

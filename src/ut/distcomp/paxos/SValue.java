@@ -7,7 +7,7 @@ public class SValue implements Serializable{
 	public SValue(int slot, Command command) {
 		super();
 		this.slot = slot;
-		this.command = command;
+		this.command = new Command(command);
 	}
 	
 	public SValue(SValue other) {

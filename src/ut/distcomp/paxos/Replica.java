@@ -12,7 +12,7 @@ import ut.distcomp.paxos.Message.MessageType;
 import ut.distcomp.paxos.Message.NodeType;
 
 public class Replica extends Thread {
-	public Replica(Config config, NetController nc, int replicaId, 
+	public Replica(Config config, NetController nc, int replicaId,
 			BlockingQueue<Message> q) {
 		super();
 		this.config = config;
@@ -27,27 +27,32 @@ public class Replica extends Thread {
 
 	// Interacts with other replicas to recover the lost state.
 	public void recover() {
-		for (int i = 0; i < config.numOfServers; i++) {
+		for (int i = 0; i < config.numServers; i++) {
 			if (i != replicaId) {
 				Message m = new Message(replicaId, i);
 				m.setStateRequestContent(NodeType.REPLICA);
-				if(nc.sendMessageToServer(i, m)){
+				if (nc.sendMessageToServer(i, m)) {
 					try {
-						/*Message recoverMsg = queue.poll(Config.QueueTimeoutVal, 
-								TimeUnit.MILLISECONDS);*/
+						/*
+						 * Message recoverMsg =
+						 * queue.poll(Config.QueueTimeoutVal,
+						 * TimeUnit.MILLISECONDS);
+						 */
 						Message recoverMsg = queue.take();
 						if (recoverMsg != null) {
-							if (recoverMsg.getMsgType() == MessageType.STATE_RES) {
+							if (recoverMsg
+									.getMsgType() == MessageType.STATE_RES) {
 								decisions = recoverMsg.getDecisions();
 								proposals = recoverMsg.getProposals();
 								break;
 							} else {
-								config.logger.info("Received non state response :"
-										+ "" + recoverMsg.toString());
+								config.logger
+										.info("Received non state response :"
+												+ "" + recoverMsg.toString());
 							}
 						} else {
-							config.logger.info("Timed out on " + i + 
-									" while retriving replica state");
+							config.logger.info("Timed out on " + i
+									+ " while retriving replica state");
 						}
 
 					} catch (InterruptedException e) {
@@ -74,22 +79,24 @@ public class Replica extends Thread {
 			switch (m.getMsgType()) {
 			case STATE_RES:
 				config.logger.info("Received State Response:" + m.toString());
-				config.logger.info("This will be ignored. T"
-						+ "he first message received is already consumed");
+				config.logger.info(
+						"This will be ignored since the first message received"
+						+ " is already consumed");
 			case STATE_REQ:
 				config.logger.info("Received State Request:" + m.toString());
 				Message response = new Message(replicaId, m.getSrc());
-				response.setStateResponseContent(NodeType.REPLICA, decisions, 
+				response.setStateResponseContent(NodeType.REPLICA, decisions,
 						proposals);
-				config.logger.info("Sending Response msg:" + response.toString());
+				config.logger
+						.info("Sending Response msg:" + response.toString());
 				nc.sendMessageToServer(m.getSrc(), response);
 				break;
 			case REQUEST:
 				config.logger.info("Received Request:" + m.toString());
 				Command command = m.getCommand();
 				if (command == null) {
-					config.logger.severe("Received invalid request: "
-							+ "" + m.toString());
+					config.logger.severe(
+							"Received invalid request: " + "" + m.toString());
 					break;
 				}
 				propose(m.getCommand());
@@ -107,8 +114,8 @@ public class Replica extends Thread {
 				// Find decision for current slot.
 				SValue p1 = getDecisionForSlot(slotNum);
 				while (p1 != null) {
-					config.logger.info("Found decision for slot:"
-							+ "" + p1.getSlot());
+					config.logger.info(
+							"Found decision for slot:" + "" + p1.getSlot());
 					Command p1c = p1.getCommand();
 					// If you had proposed a command for current slot and it was
 					// not decided then re-propose it.
@@ -144,7 +151,7 @@ public class Replica extends Thread {
 		SValue proposal = new SValue(s1, c);
 		proposals.add(proposal);
 		// Send proposal to all leaders.
-		for (int leaderId = 0; leaderId < config.numOfServers; leaderId++) {
+		for (int leaderId = 0; leaderId < config.numServers; leaderId++) {
 			Message msg = new Message(replicaId, leaderId);
 			msg.setProposeContent(s1, c);
 			config.logger.info("Sending Propose msg:" + msg.toString());
@@ -165,7 +172,7 @@ public class Replica extends Thread {
 		state.add(c.getClientId() + ": " + c.getInput());
 		slotNum++;
 		// Broadcast the message to all clients
-		for (int i = 0; i < config.numOfClients; i++) {
+		for (int i = 0; i < config.numClients; i++) {
 			Message msg = new Message(replicaId, i);
 			msg.setResponseContent(c, state);
 			nc.sendMessageToClient(i, msg);

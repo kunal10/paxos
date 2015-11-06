@@ -25,17 +25,18 @@ public class Acceptor extends Thread {
 
 	// Interacts with other replicas to recover the lost state.
 	public void recover() {
-		for (int i = 0; i < config.numOfServers; i++) {
-			if(i != acceptorId){
+		for (int i = 0; i < config.numServers; i++) {
+			if (i != acceptorId) {
 				Message m = new Message(acceptorId, i);
 				m.setStateRequestContent(NodeType.ACCEPTOR);
 				if (nc.sendMessageToServer(i, m)) {
 					try {
 						Message recoverMessage = queue.take();
-						config.logger.info("Received a acceptor recovery message "
-								+ ""+recoverMessage.toString());
+						config.logger
+								.info("Received a acceptor recovery message "
+										+ "" + recoverMessage.toString());
 						Ballot b = recoverMessage.getBallot();
-						config.logger.info("Received Ballot : "+b.toString());
+						config.logger.info("Received Ballot : " + b.toString());
 						// Build a increasing set while recovery.
 						if (b.compareTo(ballot) > 0) {
 							ballot = b;
@@ -62,14 +63,17 @@ public class Acceptor extends Thread {
 			}
 			switch (m.getMsgType()) {
 			case STATE_RES:
-				config.logger.info("Ignoring Received STATE_RES msg:" + m.toString());
+				config.logger.info(
+						"Ignoring Received STATE_RES msg:" + m.toString());
 				config.logger.info("Shouldn't have received at this point");
 				break;
 			case STATE_REQ:
 				config.logger.info("Received STATE_REQ msg:" + m.toString());
 				Message response = new Message(acceptorId, m.getSrc());
-				response.setStateResponseContent(NodeType.ACCEPTOR, accepted, ballot);
-				config.logger.info("Sending STATE_RES msg:" + response.toString());
+				response.setStateResponseContent(NodeType.ACCEPTOR, accepted,
+						ballot);
+				config.logger
+						.info("Sending STATE_RES msg:" + response.toString());
 				nc.sendMessageToServer(m.getSrc(), response);
 				break;
 			case P1A:

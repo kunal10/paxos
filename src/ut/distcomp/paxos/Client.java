@@ -24,7 +24,7 @@ public class Client {
 		super();
 		this.chatLog = new ArrayList<>();
 		this.clientId = clientId;
-		this.numOfServers = config.numOfServers;
+		this.numOfServers = config.numServers;
 		this.clientQueue = new LinkedBlockingQueue<>();
 		this.config = config;
 		this.nc = new NetController(config, numOfServers, clientQueue);

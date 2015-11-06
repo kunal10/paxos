@@ -21,36 +21,37 @@ import java.util.logging.SimpleFormatter;
 public class Config {
 
 	/**
-	 * Loads config from a file.  Optionally puts in 'procNum' if in file.
-	 * See sample file for syntax
+	 * Loads config from a file. Optionally puts in 'procNum' if in file. See
+	 * sample file for syntax
+	 * 
 	 * @param filename
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */
-	public Config(int procNum, int numServers, int numClients, String logfile) 
+	public Config(int procNum, int numServers, int numClients, String logfile)
 			throws IOException {
 		this.procNum = procNum;
-		this.numOfClients = numClients;
-		this.numOfServers = numServers;
+		this.numClients = numClients;
+		this.numServers = numServers;
 		this.numProcesses = numServers + numClients;
 		logger = Logger.getLogger("NetFramework" + procNum);
 		FileHandler fileHandler = new FileHandler(logfile);
-		logger.addHandler(fileHandler);  
+		logger.addHandler(fileHandler);
 		logger.setUseParentHandlers(false);
-        fileHandler.setFormatter(new MyFormatter());  
+		fileHandler.setFormatter(new MyFormatter());
 		addresses = new InetAddress[numProcesses];
 		ports = new int[numProcesses];
 		int basePort = 5000;
-		for (int i=0; i < numProcesses; i++) {
+		for (int i = 0; i < numProcesses; i++) {
 			ports[i] = basePort + i;
 			addresses[i] = InetAddress.getByName("localhost");
 		}
 	}
-	
+
 	private int loadInt(Properties prop, String s) {
 		return Integer.parseInt(prop.getProperty(s.trim()));
 	}
-	
+
 	/**
 	 * Default constructor for those who want to populate config file manually
 	 */
@@ -58,51 +59,52 @@ public class Config {
 	}
 
 	/**
-	 * Array of addresses of other hosts.  All hosts should have identical info here.
+	 * Array of addresses of other hosts. All hosts should have identical info
+	 * here.
 	 */
 	public InetAddress[] addresses;
-	
 
 	/**
-	 * Array of listening port of other hosts.  All hosts should have identical info here.
+	 * Array of listening port of other hosts. All hosts should have identical
+	 * info here.
 	 */
 	public int[] ports;
-	
+
 	/**
 	 * Total number of hosts
 	 */
 	public int numProcesses;
-	
+
 	/**
-	 * This hosts number (should correspond to array above).  
-	 * Each host should have a different number.
+	 * This hosts number (should correspond to array above). Each host should
+	 * have a different number.
 	 */
 	public int procNum;
-	
+
 	/**
-	 * Logger.  Mainly used for console printing, though be diverted to a file.
+	 * Logger. Mainly used for console printing, though be diverted to a file.
 	 * Verbosity can be restricted by raising level to WARN
 	 */
 	public Logger logger;
-	
+
 	/**
 	 * No of clients
 	 */
-	public int numOfClients;
-	
+	public int numClients;
+
 	/**
 	 * Num of servers.
 	 */
-	public int numOfServers;
-	
+	public int numServers;
+
 	public static final int QueueTimeoutVal = 1000;
-	
+
 }
 
 class MyFormatter extends Formatter {
 
-    @Override
-    public String format(LogRecord record) {
-        return record.getLevel() + ":" + record.getMessage()+"\n";
-    }
+	@Override
+	public String format(LogRecord record) {
+		return record.getLevel() + ":" + record.getMessage() + "\n";
+	}
 }

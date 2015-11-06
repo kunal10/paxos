@@ -80,7 +80,7 @@ public class NetController {
 		this.scoutQueue = scoutQueue;
 		this.heartbeatQueue = heartbeatQueue;
 		this.config = config;
-		this.numOfServers = config.numOfServers;
+		this.numOfServers = config.numServers;
 		inSockets = Collections.synchronizedList(new ArrayList<IncomingSock>());
 		listener = new ListenServer(config, inSockets,
 				leaderQueue,

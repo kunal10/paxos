@@ -70,7 +70,8 @@ public class Master {
 			case "restartServer":
 				nodeIndex = Integer.parseInt(inputLine[1]);
 				servers[nodeIndex] = null;
-				servers[nodeIndex] = initializeSingleServer(nodeIndex, numNodes, numClients);
+				servers[nodeIndex] = initializeSingleServer(nodeIndex, numNodes,
+						numClients);
 				servers[nodeIndex].RestartServer();
 				/*
 				 * Restart the server specified by nodeIndex
@@ -102,10 +103,10 @@ public class Master {
 		List<Integer> aliveServers = getAliveServers(numServers);
 		waitForServersToFinishProtocol(aliveServers, numServers);
 		waitForAllClientsToBeServiced(numClients);
-		
+
 	}
 
-	private static void waitForAllClientsToBeServiced(int numClients){
+	private static void waitForAllClientsToBeServiced(int numClients) {
 		// Check if all clients are serviced
 		for (int i = 0; i < numClients; i++) {
 			while (!clients[i].areAllCommandsExecuted()) {
@@ -114,7 +115,7 @@ public class Master {
 			}
 		}
 	}
-	
+
 	private static List<Integer> getAliveServers(int numServers) {
 		List<Integer> aliveServers = new ArrayList<>();
 		for (int i = 0; i < numServers; i++) {
@@ -125,14 +126,14 @@ public class Master {
 		return aliveServers;
 	}
 
-	private static void waitForServersToFinishProtocol(List<Integer> aliveServers, 
-			int numServers) {
+	private static void waitForServersToFinishProtocol(
+			List<Integer> aliveServers, int numServers) {
 		if (aliveServers.size() > (numServers / 2)) {
 			// There is a majority alive.
 			// Check whether all have completed protocol related messages.
 			for (Integer index : aliveServers) {
-				while (servers[index].IsServerAlive() && 
-						servers[index].IsServerExecutingProtocol()) {
+				while (servers[index].IsServerAlive()
+						&& servers[index].IsServerExecutingProtocol()) {
 					// Do nothing till the server is executing protocol.
 				}
 			}
@@ -153,7 +154,8 @@ public class Master {
 		clients = new Client[numClients];
 		for (int i = 0; i < numClients; i++) {
 			try {
-				clients[i] = new Client(i, new Config(i + numNodes, numNodes, numClients, "LogClient" + i + ".txt"));
+				clients[i] = new Client(i, new Config(i + numNodes, numNodes,
+						numClients, "LogClient" + i + ".txt"));
 			} catch (IOException e) {
 
 			}
@@ -167,9 +169,11 @@ public class Master {
 		}
 	}
 
-	private static Server initializeSingleServer(int serverId, int numServers, int numClients) {
+	private static Server initializeSingleServer(int serverId, int numServers,
+			int numClients) {
 		try {
-			return new Server(serverId, new Config(serverId, numServers, numClients, "LogServer" + serverId + ".txt"));
+			return new Server(serverId, new Config(serverId, numServers,
+					numClients, "LogServer" + serverId + ".txt"));
 		} catch (IOException e) {
 
 		}

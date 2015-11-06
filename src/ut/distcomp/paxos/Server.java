@@ -1,7 +1,6 @@
 package ut.distcomp.paxos;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
@@ -9,20 +8,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import ut.distcomp.framework.Config;
 import ut.distcomp.framework.NetController;
-import ut.distcomp.paxos.Message.NodeType;
 
-/**
- * 
- * Encompasses of a leader, replica and an acceptor.
- *
- */
 public class Server {
 
 	public Server(int serverId, Config config) {
 		super();
 		this.serverId = serverId;
-		this.numOfClients = config.numOfClients;
-		this.numOfServers = config.numOfServers;
 		this.config = config;
 		this.leaderQueue = new LinkedBlockingQueue<>();
 		this.replicaQueue = new LinkedBlockingQueue<>();
@@ -30,11 +21,11 @@ public class Server {
 		this.heartbeatQueue = new LinkedBlockingQueue<>();
 		this.commanderQueue = new HashMap<>();
 		this.scoutQueue = new HashMap<>();
-		this.setLeaderToPrimary = new SynchronousQueue<>();
-		this.nc = new NetController(config, leaderQueue, replicaQueue, 
-				acceptorQueue, commanderQueue, scoutQueue,
-				heartbeatQueue);
-		this.aliveSet = new int[config.numOfServers];
+		this.becomePrimary = new SynchronousQueue<>();
+		this.isPrimaryLeader = false;
+		this.nc = new NetController(config, leaderQueue, replicaQueue,
+				acceptorQueue, commanderQueue, scoutQueue, heartbeatQueue);
+		this.aliveSet = new int[config.numServers];
 	}
 
 	/**
@@ -67,7 +58,7 @@ public class Server {
 	/**
 	 * Revive a server.
 	 */
-	public void RestartServer(){
+	public void RestartServer() {
 		config.logger.info("Recovering..");
 		initializeServerThreads();
 		config.logger.info("Initialize Threads");
@@ -78,7 +69,7 @@ public class Server {
 	}
 
 	// Retrieve state for Replica.
-	private void recoverServerState(){
+	private void recoverServerState() {
 		try {
 			Thread.sleep(Config.QueueTimeoutVal);
 		} catch (InterruptedException e) {
@@ -94,20 +85,22 @@ public class Server {
 		config.logger.info("Retrived state for heartbeat");
 		// TODO: Send all messages from replica to leader ?
 		// TODO: Clear Queues ?
-		/* TODO: To make this asynchronous : 
-		 * All the threads should have a variable called recovery to be set. 
-		 * If set they call the recover function on start of the thread. 
-		 * Also there is a state maintained in the server IsRecovering which 
-		 * should be set to false once all threads have recovered. 
-		 * This state should be used by allclear in blocking
-		 * */ 
+		/*
+		 * TODO: To make this asynchronous : All the threads should have a
+		 * variable called recovery to be set. If set they call the recover
+		 * function on start of the thread. Also there is a state maintained in
+		 * the server IsRecovering which should be set to false once all threads
+		 * have recovered. This state should be used by allclear in blocking
+		 */
 	}
 
 	private void initializeServerThreads() {
 		replicaThread = new Replica(config, nc, serverId, replicaQueue);
 		acceptorThread = new Acceptor(config, nc, serverId);
-		heartbeatThread = new Heartbeat(config, nc, serverId, 0, 
-				setLeaderToPrimary, aliveSet);
+		// TODO(asvenk) : Why are you passing aliveSet for primaryLeaderView
+		// param ??
+		heartbeatThread = new Heartbeat(config, nc, serverId, 0,
+				becomePrimary, aliveSet);
 		// TODO: Initialize and Pass the atomic integer to the leader here.
 	}
 
@@ -117,18 +110,18 @@ public class Server {
 		acceptorThread.start();
 		// TODO: Start leader thread.
 	}
-	
-	public boolean IsServerAlive(){
+
+	public boolean IsServerAlive() {
 		boolean isAlive = false;
-		if(heartbeatThread != null && replicaThread != null && 
-				leaderThread != null && acceptorThread != null){
-			isAlive = heartbeatThread.isAlive() && replicaThread.isAlive() && 
-					leaderThread.isAlive() && acceptorThread.isAlive();
+		if (heartbeatThread != null && replicaThread != null
+				&& leaderThread != null && acceptorThread != null) {
+			isAlive = heartbeatThread.isAlive() && replicaThread.isAlive()
+					&& leaderThread.isAlive() && acceptorThread.isAlive();
 		}
 		return isAlive;
 	}
-	
-	public boolean IsServerExecutingProtocol(){
+
+	public boolean IsServerExecutingProtocol() {
 		boolean isExecuting = false;
 		// TODO: check if there are any existing commander and scout threads.
 		// Return true is there are threads.
@@ -143,24 +136,24 @@ public class Server {
 	 */
 	public void timeBombLeader(int n) {
 		// TODO: Implement this.
-		if(isPrimaryLeader){
+		if (isPrimaryLeader) {
 			// A number which is shared between two threads.
 			// Reset this number here.
-			// Both commander and scout increase this number while sending messages.
-			// Spawn a thread which checks whether this number is equal to n. 
+			// Both commander and scout increase this number while sending
+			// messages.
+			// Spawn a thread which checks whether this number is equal to n.
 			// As soon as its equal call kill()
 			numberOfMessagesToTimebomb.set(0);
-			Thread t = new Thread(){
+			Thread t = new Thread() {
 				@Override
 				public void run() {
-					while(numberOfMessagesToTimebomb.get() <= n){
+					while (numberOfMessagesToTimebomb.get() <= n) {
 						// Do nothing
 					}
 					CrashServer();
 				}
 			};
 			t.start();
-			
 		}
 	}
 
@@ -168,14 +161,6 @@ public class Server {
 	 * Server Id of this server instance.
 	 */
 	final private int serverId;
-	/**
-	 * Num of clients in the system.
-	 */
-	final private int numOfClients;
-	/**
-	 * Num of servers in the system.
-	 */
-	final private int numOfServers;
 	/**
 	 * Communication framework for communicating.
 	 */
@@ -225,11 +210,11 @@ public class Server {
 	 */
 	HashMap<Integer, BlockingQueue<Message>> scoutQueue;
 
-	BlockingQueue<Boolean> setLeaderToPrimary;
+	BlockingQueue<Boolean> becomePrimary;
+
+	boolean isPrimaryLeader;
 
 	int[] aliveSet;
-	
-	boolean isPrimaryLeader;
-	
+
 	AtomicInteger numberOfMessagesToTimebomb;
 }
