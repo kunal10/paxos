@@ -61,7 +61,7 @@ public class Server {
 	public void StartServer() {
 		initializeServerThreads();
 		startServerThreads();
-		// If the id is 0 insert into the boolean blocking queue ?
+		// TODO: If the id is 0 insert into the boolean blocking queue ?
 	}
 
 	/**
