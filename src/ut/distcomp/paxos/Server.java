@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import ut.distcomp.framework.Config;
 import ut.distcomp.framework.NetController;
@@ -60,6 +61,7 @@ public class Server {
 	public void StartServer() {
 		initializeServerThreads();
 		startServerThreads();
+		// If the id is 0 insert into the boolean blocking queue ?
 	}
 
 	/**
@@ -106,12 +108,14 @@ public class Server {
 		acceptorThread = new Acceptor(config, nc, serverId);
 		heartbeatThread = new Heartbeat(config, nc, serverId, 0, 
 				setLeaderToPrimary, aliveSet);
+		// TODO: Initialize and Pass the atomic integer to the leader here.
 	}
 
 	private void startServerThreads() {
 		replicaThread.start();
 		heartbeatThread.start();
 		acceptorThread.start();
+		// TODO: Start leader thread.
 	}
 	
 	public boolean IsServerAlive(){
@@ -139,6 +143,25 @@ public class Server {
 	 */
 	public void timeBombLeader(int n) {
 		// TODO: Implement this.
+		if(isPrimaryLeader){
+			// A number which is shared between two threads.
+			// Reset this number here.
+			// Both commander and scout increase this number while sending messages.
+			// Spawn a thread which checks whether this number is equal to n. 
+			// As soon as its equal call kill()
+			numberOfMessagesToTimebomb.set(0);
+			Thread t = new Thread(){
+				@Override
+				public void run() {
+					while(numberOfMessagesToTimebomb.get() <= n){
+						// Do nothing
+					}
+					CrashServer();
+				}
+			};
+			t.start();
+			
+		}
 	}
 
 	/**
@@ -205,4 +228,8 @@ public class Server {
 	BlockingQueue<Boolean> setLeaderToPrimary;
 
 	int[] aliveSet;
+	
+	boolean isPrimaryLeader;
+	
+	AtomicInteger numberOfMessagesToTimebomb;
 }

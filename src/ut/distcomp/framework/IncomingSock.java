@@ -63,7 +63,7 @@ public class IncomingSock extends Thread {
 			try {
 				Message msg = (Message) in.readObject();
 				addMessageToDestinationQueue(msg);
-				logger.info("\n\nReceived : "+msg.toString());
+				//logger.info("\n\nReceived : "+msg.toString());
 			} 
 			catch(EOFException e){
 				logger.log(Level.SEVERE, "EOF Exception");
@@ -133,7 +133,7 @@ public class IncomingSock extends Thread {
 				break;
 			case SERVER:
 				heartbeatQueue.add(msg);
-				logger.info("Added to heartbeat queue Message :"+ msg.toString());
+				logger.info("Added to heartbeat queue Message from :"+ msg.getSrc ());
 				break;
 		}
 		
