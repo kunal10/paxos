@@ -4,8 +4,6 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
-import ut.distcomp.paxos.Message.NodeType;
-
 public class Message implements Serializable {
 	public enum NodeType {
 		CLIENT, SERVER, REPLICA, LEADER, COMMANDER, SCOUT, ACCEPTOR,
@@ -41,7 +39,6 @@ public class Message implements Serializable {
 		this.ballot = null;
 		this.sValue = null;
 		this.command = null;
-		this.response = null;
 		this.accepted = null;
 		this.proposals = null;
 		this.decisions = null;
@@ -68,7 +65,6 @@ public class Message implements Serializable {
 		destType = NodeType.CLIENT;
 		msgType = MessageType.RESPONSE;
 		sValue = new SValue(s);
-		this.response = new String(response);
 	}
 
 	public void setStateRequestContent(NodeType nt) {
@@ -216,10 +212,6 @@ public class Message implements Serializable {
 		return command;
 	}
 
-	public String getResponse() {
-		return response;
-	}
-
 	public Set<PValue> getAccepted() {
 		return accepted;
 	}
@@ -255,9 +247,6 @@ public class Message implements Serializable {
 		}
 		if (command != null) {
 			result.append("\nCommand: " + command.toString());
-		}
-		if (response != null) {
-			result.append("\nResponse:" + response);
 		}
 		if (accepted != null) {
 			result.append("\nAccepted:");
@@ -296,8 +285,6 @@ public class Message implements Serializable {
 	private SValue sValue;
 	// Present in REQUEST and RESPONSE messages.
 	private Command command;
-	// Present in RESPONSE messages.
-	private String response;
 	// Present in ADOPTED and P1B messages.
 	// Present in STATE_RES messages when coming from an acceptor
 	private Set<PValue> accepted;

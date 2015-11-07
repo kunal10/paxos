@@ -109,6 +109,19 @@ public class Leader extends Thread {
 		}
 	}
 
+	public boolean areScoutsCommandersDead() {
+		boolean b = true;
+		for (Scout s : scouts.values()) {
+			boolean isDeadOrNull = (s == null) || !s.isAlive();
+			b = b && isDeadOrNull;
+		}
+		for (Commander c : commanders.values()) {
+			boolean isDeadOrNull = (c == null) || !c.isAlive();
+			b = b && isDeadOrNull;
+		}
+		return b;
+	}
+
 	private void spawnScout() {
 		// Add blocking queue for new scout.
 		BlockingQueue<Message> scoutQueue = new LinkedBlockingQueue<>();
@@ -175,6 +188,19 @@ public class Leader extends Thread {
 		// Add all proposals from pValueMap.
 		for (PValue pValue : pValueMap.values()) {
 			proposals.add(pValue.getsValue());
+		}
+	}
+
+	private void killAllScoutsAndCommander() {
+		for (Commander c : commanders.values()) {
+			if (c != null) {
+				c.stop();
+			}
+		}
+		for (Scout s : scouts.values()) {
+			if (s != null) {
+				s.stop();
+			}
 		}
 	}
 

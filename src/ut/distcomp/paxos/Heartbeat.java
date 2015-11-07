@@ -260,8 +260,8 @@ public class Heartbeat extends Thread {
 	private NetController nc;
 	private Config config;
 	private BlockingQueue<Message> heartbeatQueue;
-	// TODO(asvenk) : Add a good description about what it stores and how & when
-	// it gets updated. One has to go through a lot of code to understand it.
+	// In heartbeat this is the votes of all servers. 
+	// If its set to -1 then that process is dead
 	private int[] primaryLeaderView;
 	private BlockingQueue<Boolean> becomePrimary;
 }
