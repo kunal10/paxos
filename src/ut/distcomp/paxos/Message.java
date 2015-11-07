@@ -1,9 +1,7 @@
 package ut.distcomp.paxos;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class Message implements Serializable {
@@ -40,7 +38,7 @@ public class Message implements Serializable {
 		this.ballot = null;
 		this.sValue = null;
 		this.command = null;
-		this.output = null;
+		this.response = null;
 		this.accepted = null;
 		this.proposals = null;
 		this.decisions = null;
@@ -62,12 +60,12 @@ public class Message implements Serializable {
 		command = new Command(c);
 	}
 
-	public void setResponseContent(Command c, List<String> l) {
+	public void setResponseContent(SValue s, String response) {
 		srcType = NodeType.REPLICA;
 		destType = NodeType.CLIENT;
 		msgType = MessageType.RESPONSE;
-		command = new Command(c);
-		output = new ArrayList<String>(l);
+		sValue = new SValue(s);
+		this.response = new String(response);
 	}
 
 	public void setStateRequestContent(NodeType nt) {
@@ -204,8 +202,8 @@ public class Message implements Serializable {
 		return command;
 	}
 
-	public List<String> getOutput() {
-		return output;
+	public String getResponse() {
+		return response;
 	}
 
 	public Set<PValue> getAccepted() {
@@ -244,11 +242,8 @@ public class Message implements Serializable {
 		if (command != null) {
 			result.append("\nCommand: " + command.toString());
 		}
-		if (output != null) {
-			result.append("\nOutput:");
-			for (String elem : output) {
-				result.append("\n" + elem);
-			}
+		if (response != null) {
+			result.append("\nResponse:" + response);
 		}
 		if (accepted != null) {
 			result.append("\nAccepted:");
@@ -283,12 +278,12 @@ public class Message implements Serializable {
 	// Present in ADOPTED, P1A, P2A, P1B, P2B and PRE_EMPTED messages.
 	// Also present in STATE_RES messages when coming from an acceptor
 	private Ballot ballot;
-	// Present in PROPOSE, DECISION and P2A messages.
+	// Present in PROPOSE, DECISION, RESPONSE and P2A messages.
 	private SValue sValue;
 	// Present in REQUEST and RESPONSE messages.
 	private Command command;
 	// Present in RESPONSE messages.
-	private List<String> output;
+	private String response;
 	// Present in ADOPTED and P1B messages.
 	// Present in STATE_RES messages when coming from an acceptor
 	private Set<PValue> accepted;

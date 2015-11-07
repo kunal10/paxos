@@ -19,12 +19,12 @@ public class Server {
 		this.replicaQueue = new LinkedBlockingQueue<>();
 		this.acceptorQueue = new LinkedBlockingQueue<>();
 		this.heartbeatQueue = new LinkedBlockingQueue<>();
-		this.commanderQueue = new HashMap<>();
-		this.scoutQueue = new HashMap<>();
+		this.commanderQueues = new HashMap<>();
+		this.scoutQueues = new HashMap<>();
 		this.becomePrimary = new SynchronousQueue<>();
 		this.isPrimaryLeader = false;
 		this.nc = new NetController(config, leaderQueue, replicaQueue,
-				acceptorQueue, commanderQueue, scoutQueue, heartbeatQueue);
+				acceptorQueue, commanderQueues, scoutQueues, heartbeatQueue);
 		this.aliveSet = new int[config.numServers];
 	}
 
@@ -204,11 +204,11 @@ public class Server {
 	/**
 	 * Reference to the list of commander queues
 	 */
-	HashMap<Integer, BlockingQueue<Message>> commanderQueue;
+	HashMap<Integer, BlockingQueue<Message>> commanderQueues;
 	/**
 	 * Reference to list of scout queues.
 	 */
-	HashMap<Integer, BlockingQueue<Message>> scoutQueue;
+	HashMap<Integer, BlockingQueue<Message>> scoutQueues;
 
 	BlockingQueue<Boolean> becomePrimary;
 
