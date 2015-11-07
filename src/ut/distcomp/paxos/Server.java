@@ -38,6 +38,8 @@ public class Server {
 		killThread(leaderThread);
 		killThread(replicaThread);
 		killThread(acceptorThread);
+		// TODO: Kill any timebomb leader thread.
+		// TODO: Kill all commanders and scouts
 	}
 
 	private void killThread(Thread t) {
@@ -86,19 +88,17 @@ public class Server {
 		// TODO: Send all messages from replica to leader ?
 		// TODO: Clear Queues ?
 		/*
-		 * TODO: To make this asynchronous : All the threads should have a
+		 * TODO*: To make this asynchronous : All the threads should have a
 		 * variable called recovery to be set. If set they call the recover
 		 * function on start of the thread. Also there is a state maintained in
 		 * the server IsRecovering which should be set to false once all threads
-		 * have recovered. This state should be used by allclear in blocking
+		 * have recovered. This state should be used by allclear in blocking.
 		 */
 	}
 
 	private void initializeServerThreads() {
 		replicaThread = new Replica(config, nc, serverId, replicaQueue);
 		acceptorThread = new Acceptor(config, nc, serverId);
-		// TODO(asvenk) : Why are you passing aliveSet for primaryLeaderView
-		// param ??
 		heartbeatThread = new Heartbeat(config, nc, serverId, 0,
 				becomePrimary, aliveSet);
 		// TODO: Initialize and Pass the atomic integer to the leader here.
@@ -122,10 +122,9 @@ public class Server {
 	}
 
 	public boolean IsServerExecutingProtocol() {
-		boolean isExecuting = false;
-		// TODO: check if there are any existing commander and scout threads.
+		return !leaderThread.areScoutsCommandersDead();
+		// check if there are any existing commander and scout threads.
 		// Return true is there are threads.
-		return isExecuting;
 	}
 
 	/**
