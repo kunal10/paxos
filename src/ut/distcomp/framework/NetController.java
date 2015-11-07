@@ -54,13 +54,13 @@ public class NetController {
 	 * TODO: Once commander finishes its execution it must remove its entry 
 	 * from this queue. 
 	 */
-	private HashMap<Integer,BlockingQueue<Message>> commanderQueue;
+	private HashMap<Integer,BlockingQueue<Message>> commanderQueues;
 	/*
 	 * Map of a scout to the queue used by it to retrieve its messages. 
 	 * TODO: Once scout finishes its execution it must remove its entry 
 	 * from this queue. 
 	 */
-	private HashMap<Integer,BlockingQueue<Message>> scoutQueue;
+	private HashMap<Integer,BlockingQueue<Message>> scoutQueues;
 	
 	private BlockingQueue<Message> heartbeatQueue;
 	
@@ -76,8 +76,8 @@ public class NetController {
 		this.leaderQueue = leaderQueue;
 		this.replicaQueue = replicaQueue;
 		this.acceptorQueue = acceptorQueue;
-		this.commanderQueue = commanderQueue;
-		this.scoutQueue = scoutQueue;
+		this.commanderQueues = commanderQueue;
+		this.scoutQueues = scoutQueue;
 		this.heartbeatQueue = heartbeatQueue;
 		this.config = config;
 		this.numOfServers = config.numServers;
@@ -88,7 +88,8 @@ public class NetController {
 				acceptorQueue,
 				commanderQueue,
 				scoutQueue,
-				heartbeatQueue);
+				heartbeatQueue,
+				null);
 		outSockets = new OutgoingSock[config.numProcesses];
 		listener.start();
 	}
@@ -100,7 +101,13 @@ public class NetController {
 		this.config = config;
 		this.numOfServers = numOfServers;
 		inSockets = Collections.synchronizedList(new ArrayList<IncomingSock>());
-		listener = new ListenServer(config, inSockets, clientQueue);
+		listener = new ListenServer(config, inSockets, leaderQueue,
+				null,
+				null,
+				null,
+				null,
+				null,
+				clientQueue);
 		outSockets = new OutgoingSock[config.numProcesses];
 		listener.start();
 	}
@@ -126,11 +133,19 @@ public class NetController {
 	}
 
 	public BlockingQueue<Message> getCommanderQueue(int i) {
-		return commanderQueue.get(i);
+		return commanderQueues.get(i);
+	}
+	
+	public HashMap<Integer, BlockingQueue<Message>> getCommanderQueues() {
+		return commanderQueues;
 	}
 
 	public BlockingQueue<Message> getScoutQueue(int i) {
-		return scoutQueue.get(i);
+		return scoutQueues.get(i);
+	}
+	
+	public HashMap<Integer, BlockingQueue<Message>> getScoutQueues() {
+		return scoutQueues;
 	}
 
 	public BlockingQueue<Message> getHeartbeatQueue() {
@@ -169,7 +184,10 @@ public class NetController {
 	 * @return
 	 */
 	public boolean sendMessageToClient(int clientId, Message msg){
+		config.logger.info("Sending message to a client : "+clientId);
 		int clientProcessId = clientId + numOfServers;
+		config.logger.info("using client process ID : "+clientProcessId);
+		config.logger.info("Sending message to client : "+msg.toString());
 		return sendMsg(clientProcessId, msg);
 	}
 	

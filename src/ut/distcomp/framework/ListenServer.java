@@ -58,7 +58,8 @@ public class ListenServer extends Thread {
 			BlockingQueue<Message> replicaQueue, BlockingQueue<Message> acceptorQueue,
 			HashMap<Integer, BlockingQueue<Message>> commanderQueue2,
 			HashMap<Integer, BlockingQueue<Message>> scoutQueue2,
-			BlockingQueue<Message> heartbeatQueue) {
+			BlockingQueue<Message> heartbeatQueue,
+			BlockingQueue<Message> clientQueue) {
 		this.conf = config;
 		this.socketList = inSockets;
 		this.leaderQueue = leaderQueue;
@@ -67,35 +68,30 @@ public class ListenServer extends Thread {
 		this.commanderQueue = commanderQueue2;
 		this.scoutQueue = scoutQueue2;
 		this.heartbeatQueue = heartbeatQueue;
+		this.clientQueue = clientQueue;
 		startServerSock();
 	}
 
-	public ListenServer(Config config, List<IncomingSock> inSockets, BlockingQueue<Message> clientQueue) {
+	/*public ListenServer(Config config, List<IncomingSock> inSockets, BlockingQueue<Message> clientQueue) {
 		this.conf = config;
 		this.socketList = inSockets;
 		this.clientQueue = clientQueue;
 		startServerSock();
-	}
+	}*/
 
 	public void run() {
 		while (!killSig) {
 			try {
 				IncomingSock incomingSock = null;
-				// Assuming servers are processes with id's less than 1000. All others are clients
-				if(procNum < 1000){
-					incomingSock = new IncomingSock(serverSock.accept(),
-							conf.logger,
-							leaderQueue,
-							replicaQueue,
-							acceptorQueue,
-							commanderQueue,
-							scoutQueue,
-							heartbeatQueue);
-				}else {
-					incomingSock = new IncomingSock(serverSock.accept(),
-							conf.logger,
-							clientQueue);
-				}
+				incomingSock = new IncomingSock(serverSock.accept(),
+						conf.logger,
+						leaderQueue,
+						replicaQueue,
+						acceptorQueue,
+						commanderQueue,
+						scoutQueue,
+						heartbeatQueue,
+						clientQueue);
 				 
 				socketList.add(incomingSock);
 				incomingSock.start();

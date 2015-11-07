@@ -38,7 +38,8 @@ public class IncomingSock extends Thread {
 			BlockingQueue<Message> acceptorQueue,
 			HashMap<Integer, BlockingQueue<Message>> commanderQueues,
 			HashMap<Integer, BlockingQueue<Message>> scoutQueues,
-			BlockingQueue<Message> heartbeatQueue) throws IOException {
+			BlockingQueue<Message> heartbeatQueue,
+			BlockingQueue<Message> clientQueue2) throws IOException {
 		this.sock = sock;
 		in = new ObjectInputStream(sock.getInputStream());
 		sock.shutdownOutput();
@@ -49,16 +50,15 @@ public class IncomingSock extends Thread {
 		this.scoutQueues = scoutQueues;
 		this.logger = logger;
 		this.heartbeatQueue = heartbeatQueue;
+		this.clientQueue = clientQueue2;
 	}
 
-	public IncomingSock(Socket sock, Logger logger,
-			BlockingQueue<Message> clientQueue) throws IOException {
-		this.sock = sock;
-		in = new ObjectInputStream(sock.getInputStream());
-		sock.shutdownOutput();
-		this.logger = logger;
-		this.clientQueue = clientQueue;
-	}
+	/*
+	 * public IncomingSock(Socket sock, Logger logger, BlockingQueue<Message>
+	 * clientQueue) throws IOException { this.sock = sock; in = new
+	 * ObjectInputStream(sock.getInputStream()); sock.shutdownOutput();
+	 * this.logger = logger; this.clientQueue = clientQueue; }
+	 */
 
 	public void run() {
 		while (!shutdownSet) {
@@ -93,11 +93,12 @@ public class IncomingSock extends Thread {
 		switch (msg.getDestType()) {
 		case ACCEPTOR:
 			acceptorQueue.add(msg);
-			logger.info("Added to acceptor queue Message :" + msg.toString());
+			// logger.info("Added to acceptor queue Message :" +
+			// msg.toString());
 			break;
 		case CLIENT:
 			clientQueue.add(msg);
-			logger.info("Added to client queue Message :" + msg.toString());
+			// logger.info("Added to client queue Message :" + msg.toString());
 			break;
 		case COMMANDER:
 			int cId = msg.getThreadId();
@@ -105,8 +106,10 @@ public class IncomingSock extends Thread {
 			if (commanderQueues.containsKey(cId)) {
 				q = commanderQueues.get(cId);
 				q.add(msg);
-				logger.info(
-						"Added to commander queue Message :" + msg.toString());
+				/*
+				 * logger.info( "Added to commander queue Message :" +
+				 * msg.toString());
+				 */
 			} else {
 				logger.severe(
 						"Could not find a commander " + "queue for " + cId);
@@ -114,11 +117,11 @@ public class IncomingSock extends Thread {
 			break;
 		case LEADER:
 			leaderQueue.add(msg);
-			logger.info("Added to leader queue Message :" + msg.toString());
+			// logger.info("Added to leader queue Message :" + msg.toString());
 			break;
 		case REPLICA:
 			replicaQueue.add(msg);
-			logger.info("Added to replica queue Message :" + msg.toString());
+			// logger.info("Added to replica queue Message :" + msg.toString());
 			break;
 		case SCOUT:
 			int sId = msg.getThreadId();
@@ -126,15 +129,18 @@ public class IncomingSock extends Thread {
 			if (scoutQueues.containsKey(sId)) {
 				q1 = scoutQueues.get(sId);
 				q1.add(msg);
-				logger.info("Added to scout queue Message :" + msg.toString());
+				// logger.info("Added to scout queue Message :" +
+				// msg.toString());
 			} else {
 				logger.severe("Could not find a scout " + "queue for " + sId);
 			}
 			break;
 		case SERVER:
 			heartbeatQueue.add(msg);
-			logger.info(
-					"Added to heartbeat queue Message from :" + msg.getSrc());
+			/*
+			 * logger.info( "Added to heartbeat queue Message from :" +
+			 * msg.getSrc());
+			 */
 			break;
 		}
 

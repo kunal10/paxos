@@ -9,8 +9,8 @@ import ut.distcomp.framework.NetController;
 import ut.distcomp.paxos.Message.NodeType;
 
 public class Commander extends Thread {
-	public Commander(Config config, NetController nc, int leaderId,
-			int commanderId, PValue pValue) {
+	public Commander(Config config, NetController nc, int[] aliveSet,
+			int leaderId, int commanderId, PValue pValue) {
 		super();
 		this.config = config;
 		this.nc = nc;
@@ -18,13 +18,15 @@ public class Commander extends Thread {
 		this.leaderId = leaderId;
 		this.commanderId = commanderId;
 		this.pValue = new PValue(pValue);
+		this.aliveSet = aliveSet;
 	}
 
 	public void run() {
 		Set<Integer> received = new HashSet<Integer>();
 		// Send P2A message to all acceptors.
 		sendP2AToAcceptors();
-		while (true) {
+		while (!Leader.isBlocked(aliveSet, received,
+				config.numServers / 2 + 1)) {
 			Message m = null;
 			try {
 				m = queue.take();
@@ -47,16 +49,11 @@ public class Commander extends Thread {
 					if (received.size() >= (config.numServers / 2 + 1)) {
 						// Send the decision to all replicas.
 						sendDecisionToReplicas();
-						// TODO(klad) : Check if this can cause any issues.
 						return;
 					}
 				} else {
 					// Send PreEmpted message.
-					Message msg = new Message(leaderId, leaderId);
-					msg.setPreEmptedContent(NodeType.COMMANDER, b1);
-					config.logger.info(
-							"Sending PreEmpted to leader:" + msg.toString());
-					nc.sendMessageToServer(leaderId, msg);
+					sendPreEmptedToLeader(b1);
 					return;
 				}
 				break;
@@ -65,6 +62,8 @@ public class Commander extends Thread {
 				break;
 			}
 		}
+		// Send blocked message to the leader.
+		sendBlockedToLeader();
 	}
 
 	private void sendP2AToAcceptors() {
@@ -88,6 +87,24 @@ public class Commander extends Thread {
 			nc.sendMessageToServer(replicaId, msg);
 		}
 	}
+	
+	private void sendPreEmptedToLeader(Ballot b1) {
+		config.logger.info(String.format(
+				"Sending PreEmpted message from commader %d to leader %d: ",
+				commanderId, leaderId));
+		Message msg = new Message(leaderId, leaderId);
+		msg.setPreEmptedContent(NodeType.COMMANDER, b1);
+		nc.sendMessageToServer(leaderId, msg);
+	}
+
+	private void sendBlockedToLeader() {
+		config.logger.info(String.format(
+				"Sending Blocked message from commader %d to leader %d: ",
+				commanderId, leaderId));
+		Message msg = new Message(leaderId, leaderId);
+		msg.setBlockedContent(NodeType.COMMANDER, commanderId);
+		nc.sendMessageToServer(leaderId, msg);
+	}
 
 	private int leaderId;
 	private int commanderId;
@@ -95,4 +112,5 @@ public class Commander extends Thread {
 	private BlockingQueue<Message> queue;
 	private NetController nc;
 	private Config config;
+	private int[] aliveSet;
 }

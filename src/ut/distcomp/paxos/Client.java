@@ -23,7 +23,7 @@ public class Client {
 
 	public Client(int clientId, Config config) {
 		super();
-		this.chatLog = new ArrayList<>(ChatLogSize);
+		this.chatLog = new Command[ChatLogSize];
 		this.clientId = clientId;
 		this.numOfServers = config.numServers;
 		this.clientQueue = new LinkedBlockingQueue<>();
@@ -50,9 +50,9 @@ public class Client {
 	 * @return
 	 */
 	public void sendMessageToChatroom(String m) {
+		int currentCommandId = getNextUniqueCommandNumber();
 		for (int i = 0; i < numOfServers; i++) {
 			Message msg = new Message(clientId, i);
-			int currentCommandId = getNextUniqueCommandNumber();
 			msg.setRequestContent(new Command(clientId, currentCommandId,
 					CommandType.SEND_MSG, m));
 			outstandingRequests.add(currentCommandId);
@@ -85,7 +85,7 @@ public class Client {
 				try {
 					Message m = clientQueue.take();
 					SValue sValue = m.getsValue();
-					chatLog.set(sValue.getSlot(), sValue.getCommand());
+					chatLog[sValue.getSlot()] = sValue.getCommand();
 					config.logger.info("Set " + sValue.getCommand().toString()
 							+ " at index " + sValue.getSlot());
 					// Remove an outstanding request if you have received.
@@ -94,7 +94,8 @@ public class Client {
 								.getCommandId();
 						if (outstandingRequests
 								.contains(commandIdToBeRemoved)) {
-							outstandingRequests.remove(commandIdToBeRemoved);
+							outstandingRequests.remove(
+									Integer.valueOf(commandIdToBeRemoved));
 							config.logger.info("Removed " + commandIdToBeRemoved
 									+ " on receipt of message " + m.toString());
 						}
@@ -112,10 +113,13 @@ public class Client {
 	 */
 	public List<String> getChatLog() {
 		List<Command> addedCommands = new ArrayList<>();
-		for (int i = 0; i < chatLog.size(); i++) {
-			Command c = chatLog.get(i);
+		for (int i = 0; i < ChatLogSize; i++) {
+			Command c = chatLog[i];
 			if (c != null && !addedCommands.contains(c)) {
 				addedCommands.add(c);
+				for (Command command : addedCommands) {
+					config.logger.info(command.toString()+"\n----\n");
+				}
 			}
 		}
 		return getPrintMessages(addedCommands);
@@ -151,7 +155,7 @@ public class Client {
 	/**
 	 * Chat log of this client received from the servers.
 	 */
-	private List<Command> chatLog;
+	private Command[] chatLog;
 	/**
 	 * Command ID to be used while sending to a
 	 */

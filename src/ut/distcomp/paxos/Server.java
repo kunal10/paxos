@@ -55,8 +55,19 @@ public class Server {
 	public void StartServer() {
 		initializeServerThreads();
 		startServerThreads();
-		if(serverId == 0){
-			becomePrimary.add(true);
+		try {
+			Thread.sleep(100);
+		} catch (InterruptedException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		if (serverId == 0) {
+			if (becomePrimary.offer(true)) {
+				config.logger.info("Set primary to 0 on start of the system");
+			} else {
+				config.logger.info(
+						"Did not set primary to 0 on start of the system:");
+			}
 		}
 	}
 
@@ -104,14 +115,15 @@ public class Server {
 		acceptorThread = new Acceptor(config, nc, serverId);
 		heartbeatThread = new Heartbeat(config, nc, serverId, 0,
 				becomePrimary, aliveSet, currentPrimaryLeader);
-		// TODO: Initialize and Pass the atomic integer to the leader here.
+		leaderThread = new Leader(config, nc, aliveSet, becomePrimary,
+				serverId);
 	}
 
 	private void startServerThreads() {
 		replicaThread.start();
 		heartbeatThread.start();
 		acceptorThread.start();
-		// TODO: Start leader thread.
+		leaderThread.start();
 	}
 
 	public boolean IsServerAlive() {
@@ -212,7 +224,7 @@ public class Server {
 	 */
 	HashMap<Integer, BlockingQueue<Message>> scoutQueues;
 
-	BlockingQueue<Boolean> becomePrimary;
+	SynchronousQueue<Boolean> becomePrimary;
 
 	AtomicInteger currentPrimaryLeader;
 
