@@ -64,7 +64,7 @@ public class Heartbeat extends Thread {
 				}
 				Message m = new Message(serverId, dest);
 				m.setHeartBeatContent(primaryLeaderView[serverId]);
-				config.logger.info("Sending heartbeat to " + dest);
+				//config.logger.info("Sending heartbeat to " + dest);
 				nc.sendMessageToServer(dest, m);
 			}
 		} catch (Exception e) {
@@ -240,8 +240,8 @@ public class Heartbeat extends Thread {
 		// config.logger.info(pId + " Adding timer for "+m.getSrc());
 		addTimerForServer((m.getSrc()));
 		primaryLeaderView[m.getSrc()] = m.getPrimary();
-		config.logger.info("Set the primary value of "
-				+ primaryLeaderView[m.getSrc()] + " to " + m.getPrimary());
+//		config.logger.info("Set the primary value of "
+//				+ primaryLeaderView[m.getSrc()] + " to " + m.getPrimary());
 	}
 
 	/**

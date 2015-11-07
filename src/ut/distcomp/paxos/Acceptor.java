@@ -83,8 +83,8 @@ public class Acceptor extends Thread {
 				if (b != null && b.compareTo(ballot) == 1) {
 					ballot = b;
 				}
-				msg.setP1BContent(ballot, accepted, msg.getThreadId());
-				config.logger.info("Sending P1A msg:" + msg.toString());
+				msg.setP1BContent(ballot, accepted, m.getThreadId());
+				config.logger.info("Sending P1B msg:" + msg.toString());
 				nc.sendMessageToServer(b.getlId(), msg);
 				break;
 			case P2A:
@@ -93,10 +93,10 @@ public class Acceptor extends Thread {
 				config.logger.info("Received P2A msg:" + m.toString());
 				if (b2 != null && b2.compareTo(ballot) >= 0) {
 					ballot = b2;
-					accepted.add(new PValue(ballot, msg2.getsValue()));
+					accepted.add(new PValue(ballot, m.getsValue()));
 				}
 				msg2.setP2BContent(ballot, m.getThreadId());
-				config.logger.info("Sending P2A msg:" + msg2.toString());
+				config.logger.info("Sending P2B msg:" + msg2.toString());
 				nc.sendMessageToServer(b2.getlId(), msg2);
 				break;
 			default:

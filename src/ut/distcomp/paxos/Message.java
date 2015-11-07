@@ -234,7 +234,7 @@ public class Message implements Serializable {
 
 	public String toString() {
 		StringBuilder result = new StringBuilder();
-		result.append("\nSrc: " + src);
+		result.append("\n\nSrc: " + src);
 		result.append("\nDest: " + dest);
 		result.append("\nSrcType: " + srcType.name());
 		result.append("\nDestType: " + destType.name());

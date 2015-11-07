@@ -52,7 +52,10 @@ public class Leader extends Thread {
 	public void run() {
 		// Wait until this leader gets elected as primary.
 		try {
+			config.logger.info("Waiting to be elected as primary");
 			becomePrimary.take();
+			config.logger.info("Elected as primary");
+			spawnScout();
 		} catch (InterruptedException e) {
 			config.logger.info(e.getMessage());
 		}
@@ -69,6 +72,7 @@ public class Leader extends Thread {
 			Message m = null;
 			try {
 				m = leaderQueue.take();
+				config.logger.info("Leader received msg: " + m.toString());
 			} catch (InterruptedException e) {
 				config.logger.severe(e.getMessage());
 				continue;
@@ -78,6 +82,8 @@ public class Leader extends Thread {
 				SValue proposal = m.getsValue();
 				if (!existsProposalForSlot(proposal.getSlot())) {
 					proposals.add(proposal);
+					config.logger
+							.info("Added proposal: " + proposal.toString());
 					if (active) {
 						spawnCommander(proposal);
 					}
@@ -123,6 +129,7 @@ public class Leader extends Thread {
 	}
 
 	private void spawnScout() {
+		config.logger.info("Spawning new scout: " + nextScoutId);
 		// Add blocking queue for new scout.
 		BlockingQueue<Message> scoutQueue = new LinkedBlockingQueue<>();
 		scoutQueues.put(nextScoutId, scoutQueue);
@@ -135,6 +142,7 @@ public class Leader extends Thread {
 	}
 
 	private void spawnCommander(SValue sValue) {
+		config.logger.info("Spawning new commander: " + nextCommanderId);
 		PValue pValue = new PValue(ballot, sValue);
 		// Add blocking queue for new commander.
 		BlockingQueue<Message> commanderQueue = new LinkedBlockingQueue<>();

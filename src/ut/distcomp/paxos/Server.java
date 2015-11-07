@@ -54,7 +54,20 @@ public class Server {
 	public void StartServer() {
 		initializeServerThreads();
 		startServerThreads();
-		// TODO: If the id is 0 insert into the boolean blocking queue ?
+		try {
+			Thread.sleep(100);
+		} catch (InterruptedException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		if (serverId == 0) {
+			if (becomePrimary.offer(true)) {
+				config.logger.info("Set primary to 0 on start of the system");
+			} else {
+				config.logger.info(
+						"Did not set primary to 0 on start of the system:");
+			}
+		}
 	}
 
 	/**
@@ -210,7 +223,7 @@ public class Server {
 	 */
 	HashMap<Integer, BlockingQueue<Message>> scoutQueues;
 
-	BlockingQueue<Boolean> becomePrimary;
+	SynchronousQueue<Boolean> becomePrimary;
 
 	boolean isPrimaryLeader;
 

@@ -88,7 +88,8 @@ public class NetController {
 				acceptorQueue,
 				commanderQueue,
 				scoutQueue,
-				heartbeatQueue);
+				heartbeatQueue,
+				null);
 		outSockets = new OutgoingSock[config.numProcesses];
 		listener.start();
 	}
@@ -100,7 +101,13 @@ public class NetController {
 		this.config = config;
 		this.numOfServers = numOfServers;
 		inSockets = Collections.synchronizedList(new ArrayList<IncomingSock>());
-		listener = new ListenServer(config, inSockets, clientQueue);
+		listener = new ListenServer(config, inSockets, leaderQueue,
+				null,
+				null,
+				null,
+				null,
+				null,
+				clientQueue);
 		outSockets = new OutgoingSock[config.numProcesses];
 		listener.start();
 	}
@@ -177,7 +184,10 @@ public class NetController {
 	 * @return
 	 */
 	public boolean sendMessageToClient(int clientId, Message msg){
+		config.logger.info("Sending message to a client : "+clientId);
 		int clientProcessId = clientId + numOfServers;
+		config.logger.info("using client process ID : "+clientProcessId);
+		config.logger.info("Sending message to client : "+msg.toString());
 		return sendMsg(clientProcessId, msg);
 	}
 	
