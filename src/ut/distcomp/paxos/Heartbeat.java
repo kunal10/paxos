@@ -52,6 +52,7 @@ public class Heartbeat extends Thread {
 			config.logger.info("Retriving heartbeat from " + m.toString());
 			// Just adopt a value from any heartbeat.
 			primaryLeaderView[serverId] = m.getPrimary();
+			currentPlId.set(m.getPrimary());
 		} catch (InterruptedException e) {
 
 		}
@@ -121,7 +122,7 @@ public class Heartbeat extends Thread {
 			if (failedProcess == currentPlId.get()) {
 				config.logger.info(
 						"Detected death of current leader " + currentPlId);
-				primaryLeaderView[serverId] = currentPlId.incrementAndGet()
+				primaryLeaderView[serverId] = (currentPlId.get() + 1)
 						% config.numServers;
 				config.logger.info("Setting vote for new leader to "
 						+ primaryLeaderView[serverId]);
@@ -203,9 +204,6 @@ public class Heartbeat extends Thread {
 		long freq = 1000;
 		// Set a new timer which executed the SendHeartbeatTask for the given
 		// frequency.
-		// TODO:On kill this timer should be killed using tt.cancel();
-		// timer.cancel();
-		// TODO: Register timer threads for killing later.
 		tt = new SendHeartBeatTask();
 		timer2.schedule(tt, 0, freq);
 		// Initialize all the timers to track heartbeat of other processes.

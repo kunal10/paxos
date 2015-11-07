@@ -56,7 +56,7 @@ public class Leader extends Thread {
 			becomePrimary.take();
 			config.logger.info("Elected as primary");
 			spawnScout();
-		} catch (InterruptedException e) {
+		} catch (Exception e) {
 			config.logger.info(e.getMessage());
 		}
 		while (true) {
@@ -73,7 +73,7 @@ public class Leader extends Thread {
 			try {
 				m = leaderQueue.take();
 				config.logger.info("Leader received msg: " + m.toString());
-			} catch (InterruptedException e) {
+			} catch (Exception e) {
 				config.logger.severe(e.getMessage());
 				continue;
 			}

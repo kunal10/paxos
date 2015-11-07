@@ -3,6 +3,7 @@ package ut.distcomp.paxos;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -29,8 +30,7 @@ public class Client {
 		this.clientQueue = new LinkedBlockingQueue<>();
 		this.config = config;
 		this.nc = new NetController(config, numOfServers, clientQueue);
-		this.outstandingRequests = Collections
-				.synchronizedList(new ArrayList<Integer>());
+		this.outstandingRequests = new HashSet<>();
 		startReceiveThread();
 	}
 
@@ -51,11 +51,11 @@ public class Client {
 	 */
 	public void sendMessageToChatroom(String m) {
 		int currentCommandId = getNextUniqueCommandNumber();
+		outstandingRequests.add(currentCommandId);
 		for (int i = 0; i < numOfServers; i++) {
 			Message msg = new Message(clientId, i);
 			msg.setRequestContent(new Command(clientId, currentCommandId,
 					CommandType.SEND_MSG, m));
-			outstandingRequests.add(currentCommandId);
 			if (nc.sendMessageToServer(i, msg)) {
 				config.logger.info("Succesfully sent to " + i
 						+ "\nMessage Sent : " + "\n" + msg.toString());
@@ -154,6 +154,7 @@ public class Client {
 
 	/**
 	 * Chat log of this client received from the servers.
+	 * TODO: Change it to some different structure.
 	 */
 	private Command[] chatLog;
 	/**
@@ -184,7 +185,7 @@ public class Client {
 	 * keeps the list of all the outstanding requests to the server which is not
 	 * added yet.
 	 */
-	private List<Integer> outstandingRequests;
+	private HashSet<Integer> outstandingRequests;
 
 	/**
 	 * Reference to the receive thread

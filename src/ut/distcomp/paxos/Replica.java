@@ -153,7 +153,6 @@ public class Replica extends Thread {
 			Message msg = new Message(replicaId, leaderId);
 			msg.setProposeContent(s1, c);
 			config.logger.info("Sending Propose msg:" + msg.toString());
-			// TODO(asvenk) : What is the appropriate method to be used here.
 			nc.sendMessageToServer(leaderId, msg);
 		}
 	}

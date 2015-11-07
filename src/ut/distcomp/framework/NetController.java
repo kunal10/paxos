@@ -51,14 +51,10 @@ public class NetController {
 	private BlockingQueue<Message> acceptorQueue;
 	/*
 	 * Map of a commander to the queue used by it to retrieve its messages. 
-	 * TODO: Once commander finishes its execution it must remove its entry 
-	 * from this queue. 
 	 */
 	private HashMap<Integer,BlockingQueue<Message>> commanderQueues;
 	/*
 	 * Map of a scout to the queue used by it to retrieve its messages. 
-	 * TODO: Once scout finishes its execution it must remove its entry 
-	 * from this queue. 
 	 */
 	private HashMap<Integer,BlockingQueue<Message>> scoutQueues;
 	

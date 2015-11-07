@@ -36,17 +36,22 @@ public class Server {
 		heartbeatThread.shutDown();
 		leaderThread.killAllScoutsAndCommander();
 		killThread(heartbeatThread);
+		heartbeatQueue = null;
 		killThread(leaderThread);
+		leaderThread = null;
 		killThread(replicaThread);
+		replicaThread = null;
 		killThread(acceptorThread);
+		acceptorThread = null;
 		// TODO: Kill any timebomb leader thread.
-		
+
 	}
 
 	private void killThread(Thread t) {
 		if (t != null) {
 			t.stop();
 		}
+		t = null;
 	}
 
 	/**
@@ -58,8 +63,6 @@ public class Server {
 		try {
 			Thread.sleep(100);
 		} catch (InterruptedException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
 		}
 		if (serverId == 0) {
 			if (becomePrimary.offer(true)) {
@@ -113,8 +116,8 @@ public class Server {
 	private void initializeServerThreads() {
 		replicaThread = new Replica(config, nc, serverId, replicaQueue);
 		acceptorThread = new Acceptor(config, nc, serverId);
-		heartbeatThread = new Heartbeat(config, nc, serverId, 0,
-				becomePrimary, aliveSet, currentPrimaryLeader);
+		heartbeatThread = new Heartbeat(config, nc, serverId, 0, becomePrimary,
+				aliveSet, currentPrimaryLeader);
 		leaderThread = new Leader(config, nc, aliveSet, becomePrimary,
 				serverId);
 	}
