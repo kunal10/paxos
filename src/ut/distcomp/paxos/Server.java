@@ -22,7 +22,7 @@ public class Server {
 		this.commanderQueues = new HashMap<>();
 		this.scoutQueues = new HashMap<>();
 		this.becomePrimary = new SynchronousQueue<>();
-		this.isPrimaryLeader = false;
+		this.currentPrimaryLeader = new AtomicInteger(0);
 		this.nc = new NetController(config, leaderQueue, replicaQueue,
 				acceptorQueue, commanderQueues, scoutQueues, heartbeatQueue);
 		this.aliveSet = new int[config.numServers];
@@ -34,12 +34,13 @@ public class Server {
 	public void CrashServer() {
 		nc.shutdown();
 		heartbeatThread.shutDown();
+		leaderThread.killAllScoutsAndCommander();
 		killThread(heartbeatThread);
 		killThread(leaderThread);
 		killThread(replicaThread);
 		killThread(acceptorThread);
 		// TODO: Kill any timebomb leader thread.
-		// TODO: Kill all commanders and scouts
+		
 	}
 
 	private void killThread(Thread t) {
@@ -54,7 +55,9 @@ public class Server {
 	public void StartServer() {
 		initializeServerThreads();
 		startServerThreads();
-		// TODO: If the id is 0 insert into the boolean blocking queue ?
+		if(serverId == 0){
+			becomePrimary.add(true);
+		}
 	}
 
 	/**
@@ -100,7 +103,7 @@ public class Server {
 		replicaThread = new Replica(config, nc, serverId, replicaQueue);
 		acceptorThread = new Acceptor(config, nc, serverId);
 		heartbeatThread = new Heartbeat(config, nc, serverId, 0,
-				becomePrimary, aliveSet);
+				becomePrimary, aliveSet, currentPrimaryLeader);
 		// TODO: Initialize and Pass the atomic integer to the leader here.
 	}
 
@@ -135,7 +138,7 @@ public class Server {
 	 */
 	public void timeBombLeader(int n) {
 		// TODO: Implement this.
-		if (isPrimaryLeader) {
+		if (currentPrimaryLeader.get() == serverId) {
 			// A number which is shared between two threads.
 			// Reset this number here.
 			// Both commander and scout increase this number while sending
@@ -211,7 +214,7 @@ public class Server {
 
 	BlockingQueue<Boolean> becomePrimary;
 
-	boolean isPrimaryLeader;
+	AtomicInteger currentPrimaryLeader;
 
 	int[] aliveSet;
 

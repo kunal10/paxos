@@ -149,7 +149,7 @@ public class Leader extends Thread {
 		}
 	}
 	
-	private void killAllScoutsAndCommander(){
+	public void killAllScoutsAndCommander(){
 		for (Commander c : commanders.values()) {
 			if(c!=null){
 				c.stop();

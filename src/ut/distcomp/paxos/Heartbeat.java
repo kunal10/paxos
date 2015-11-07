@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
 import ut.distcomp.framework.Config;
@@ -13,7 +14,7 @@ public class Heartbeat extends Thread {
 
 	public Heartbeat(Config config, NetController nc, int serverId,
 			int startPrimaryLeader, BlockingQueue<Boolean> becomePrimary,
-			int[] primaryLeaderView) {
+			int[] primaryLeaderView, AtomicInteger currentPrimaryLeader) {
 		super();
 		this.config = config;
 		this.nc = nc;
@@ -23,7 +24,7 @@ public class Heartbeat extends Thread {
 		exisitingTimers = new HashMap<>();
 		timer = new Timer();
 		timer2 = new Timer();
-		currentPlId = startPrimaryLeader;
+		currentPlId = currentPrimaryLeader;
 		this.primaryLeaderView = primaryLeaderView;
 		initializePrimaryView(startPrimaryLeader);
 	}
@@ -117,10 +118,10 @@ public class Heartbeat extends Thread {
 			config.logger.info("Detected death of " + failedProcess + " and "
 					+ "current primary is " + currentPlId);
 			primaryLeaderView[failedProcess] = -1;
-			if (failedProcess == currentPlId) {
+			if (failedProcess == currentPlId.get()) {
 				config.logger.info(
 						"Detected death of current leader " + currentPlId);
-				primaryLeaderView[serverId] = (currentPlId + 1)
+				primaryLeaderView[serverId] = currentPlId.incrementAndGet()
 						% config.numServers;
 				config.logger.info("Setting vote for new leader to "
 						+ primaryLeaderView[serverId]);
@@ -128,7 +129,7 @@ public class Heartbeat extends Thread {
 				// int newLeader = 1;
 				config.logger.info("Majority elected leader as " + newLeader);
 				primaryLeaderView[serverId] = newLeader;
-				currentPlId = newLeader;
+				currentPlId.set(newLeader);
 				if (newLeader == serverId) {
 					config.logger.info(
 							"The elected leader matches my " + "server ID");
@@ -153,7 +154,7 @@ public class Heartbeat extends Thread {
 			boolean leaderSet = false;
 			while (!leaderSet) {
 				int possibleLeader = checkMajority();
-				if (possibleLeader >= 0 && possibleLeader != currentPlId) {
+				if (possibleLeader >= 0 && possibleLeader != currentPlId.get()) {
 					leaderSet = true;
 					return possibleLeader;
 				}
@@ -256,7 +257,7 @@ public class Heartbeat extends Thread {
 	// TimerTask to send heart beats
 	TimerTask tt;
 	private int serverId;
-	private int currentPlId;
+	private AtomicInteger currentPlId;
 	private NetController nc;
 	private Config config;
 	private BlockingQueue<Message> heartbeatQueue;
