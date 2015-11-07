@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
+import ut.distcomp.paxos.Message.NodeType;
+
 public class Message implements Serializable {
 	public enum NodeType {
 		CLIENT, SERVER, REPLICA, LEADER, COMMANDER, SCOUT, ACCEPTOR,
@@ -25,6 +27,7 @@ public class Message implements Serializable {
 		P2B, 			// ACCEPTOR 	COMMANDER
 		DECISION, 		// COMMANDER 	REPLICA
 		PRE_EMPTED, 	// X 			LEADER 			:X in {SCOUT,COMMANDER}
+		BLOCKED,		// X 			LEADER			:X in {SCOUT,COMMANDER}
 		// @formatter:on
 	}
 
@@ -169,6 +172,17 @@ public class Message implements Serializable {
 		msgType = MessageType.PRE_EMPTED;
 		ballot = new Ballot(b);
 	}
+	
+	public void setBlockedContent(NodeType nt, int threadId) {
+		if (nt != NodeType.SCOUT && nt != NodeType.COMMANDER) {
+			// TODO : Add Log(SEVERE)
+			return;
+		}
+		srcType = nt;
+		destType = NodeType.LEADER;
+		msgType = MessageType.BLOCKED;
+		this.threadId = threadId;
+	}
 
 	public int getSrc() {
 		return src;
@@ -292,7 +306,7 @@ public class Message implements Serializable {
 	private Set<SValue> decisions;
 	// Present in HeartBeat messages.
 	private int primary;
-	// Present in p1a and p2a messages.
+	// Present in P1A, P2A and BLOCKED messages.
 	private int threadId;
 
 	private static final long serialVersionUID = 1L;

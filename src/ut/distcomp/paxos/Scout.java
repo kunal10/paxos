@@ -9,8 +9,8 @@ import ut.distcomp.framework.NetController;
 import ut.distcomp.paxos.Message.NodeType;
 
 public class Scout extends Thread {
-	public Scout(Config config, NetController nc, int leaderId, int scoutId,
-			Ballot b) {
+	public Scout(Config config, NetController nc, int[] aliveSet, int leaderId,
+			int scoutId, Ballot b) {
 		super();
 		this.config = config;
 		this.nc = nc;
@@ -18,6 +18,7 @@ public class Scout extends Thread {
 		this.leaderId = leaderId;
 		this.scoutId = scoutId;
 		this.b = new Ballot(b);
+		this.aliveSet = aliveSet;
 	}
 
 	public void run() {
@@ -25,7 +26,8 @@ public class Scout extends Thread {
 		Set<PValue> accepted = new HashSet<PValue>();
 		// Send P1A message to all acceptors.
 		sendP1AToAcceptors();
-		while (true) {
+		while (!Leader.isBlocked(aliveSet, received,
+				config.numServers / 2 + 1)) {
 			Message m = null;
 			try {
 				m = queue.take();
@@ -56,10 +58,7 @@ public class Scout extends Thread {
 					}
 				} else {
 					// Send PreEmpted message.
-					msg.setPreEmptedContent(NodeType.SCOUT, b1);
-					config.logger.info(
-							"Sending PreEmpted to leader:" + msg.toString());
-					nc.sendMessageToServer(leaderId, msg);
+					sendPreEmptedToLeader(b1);
 					return;
 				}
 				break;
@@ -68,6 +67,8 @@ public class Scout extends Thread {
 				break;
 			}
 		}
+		// Send blocked message to the leader.
+		sendBlockedToLeader();
 	}
 
 	private void sendP1AToAcceptors() {
@@ -81,10 +82,29 @@ public class Scout extends Thread {
 		}
 	}
 
+	private void sendPreEmptedToLeader(Ballot b1) {
+		config.logger.info(String.format(
+				"Sending PreEmpted message from scout %d to leader %d: ",
+				scoutId, leaderId));
+		Message msg = new Message(leaderId, leaderId);
+		msg.setPreEmptedContent(NodeType.SCOUT, b1);
+		nc.sendMessageToServer(leaderId, msg);
+	}
+
+	private void sendBlockedToLeader() {
+		config.logger.info(String.format(
+				"Sending Blocked message from scout %d to leader %d: ", scoutId,
+				leaderId));
+		Message msg = new Message(leaderId, leaderId);
+		msg.setBlockedContent(NodeType.SCOUT, scoutId);
+		nc.sendMessageToServer(leaderId, msg);
+	}
+
 	private int leaderId;
 	private int scoutId;
 	private Ballot b;
 	private BlockingQueue<Message> queue;
 	private NetController nc;
 	private Config config;
+	private int[] aliveSet;
 }

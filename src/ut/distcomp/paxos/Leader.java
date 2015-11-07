@@ -4,26 +4,49 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import ut.distcomp.framework.Config;
 import ut.distcomp.framework.NetController;
 
 public class Leader extends Thread {
-	public Leader(Config config, NetController nc,
+	public Leader(Config config, NetController nc, int[] aliveSet,
 			BlockingQueue<Boolean> becomePrimary, int leaderId) {
 		super();
 		this.config = config;
 		this.nc = nc;
-		this.queue = nc.getLeaderQueue();
+		this.leaderQueue = nc.getLeaderQueue();
+		this.commanderQueues = nc.getCommanderQueues();
+		this.scoutQueues = nc.getScoutQueues();
 		this.becomePrimary = becomePrimary;
 		this.leaderId = leaderId;
 		this.nextScoutId = 0;
 		this.nextCommanderId = 0;
 		this.active = false;
+		this.blocked = false;
 		this.proposals = new HashSet<SValue>();
 		this.scouts = new HashMap<Integer, Scout>();
 		this.commanders = new HashMap<Integer, Commander>();
 		this.ballot = new Ballot(0, leaderId);
+		this.aliveSet = aliveSet;
+	}
+
+	// Returns true if it is still possible to receive messages from a majority
+	// given that already received message in the set received.
+	public static boolean isBlocked(int[] alive, Set<Integer> received,
+			int expected) {
+		if (received.size() >= expected) {
+			return false;
+		}
+		Set<Integer> canRespond = new HashSet<>(received);
+		synchronized (alive) {
+			for (int i = 0; i < alive.length; i++) {
+				if (alive[i] != -1) {
+					canRespond.add(i);
+				}
+			}
+		}
+		return (canRespond.size() < expected);
 	}
 
 	public void run() {
@@ -33,15 +56,24 @@ public class Leader extends Thread {
 		} catch (InterruptedException e) {
 			config.logger.info(e.getMessage());
 		}
-		while(true) {
+		while (true) {
+			if (unblocked()) {
+				// Re-spawn a scout whenever you are unblocked due to majority
+				// of processes coming back up and reset blocked to false.
+				spawnScout();
+				blocked = false;
+			} else if (blocked) {
+				// Wait till majority is back up.
+				continue;
+			}
 			Message m = null;
 			try {
-				m = queue.take();
+				m = leaderQueue.take();
 			} catch (InterruptedException e) {
 				config.logger.severe(e.getMessage());
 				continue;
 			}
-			switch(m.getMsgType()) {
+			switch (m.getMsgType()) {
 			case PROPOSE:
 				SValue proposal = m.getsValue();
 				if (!existsProposalForSlot(proposal.getSlot())) {
@@ -66,18 +98,24 @@ public class Leader extends Thread {
 					spawnScout();
 				}
 				break;
-			// TODO(klad) : Handle prempted messages sent when majority cant be
-			// achieved by some scout/commander.
+			case BLOCKED:
+				blocked = true;
+				break;
 			default:
 				config.logger.severe("Received Unexpected Msg" + m.toString());
 				break;
 			}
-			
+
 		}
 	}
 
 	private void spawnScout() {
-		Scout scout = new Scout(config, nc, leaderId, nextScoutId, ballot);
+		// Add blocking queue for new scout.
+		BlockingQueue<Message> scoutQueue = new LinkedBlockingQueue<>();
+		scoutQueues.put(nextScoutId, scoutQueue);
+		// Add a new scout scout.
+		Scout scout = new Scout(config, nc, aliveSet, leaderId, nextScoutId,
+				ballot);
 		scouts.put(nextScoutId, scout);
 		scout.run();
 		nextScoutId++;
@@ -85,13 +123,17 @@ public class Leader extends Thread {
 
 	private void spawnCommander(SValue sValue) {
 		PValue pValue = new PValue(ballot, sValue);
-		Commander commander = new Commander(config, nc, leaderId,
+		// Add blocking queue for new commander.
+		BlockingQueue<Message> commanderQueue = new LinkedBlockingQueue<>();
+		commanderQueues.put(nextCommanderId, commanderQueue);
+		// Add a new commander.
+		Commander commander = new Commander(config, nc, aliveSet, leaderId,
 				nextCommanderId, pValue);
 		commanders.put(nextCommanderId, commander);
 		commander.run();
 		nextCommanderId++;
 	}
-	
+
 	private boolean existsProposalForSlot(int slot) {
 		for (SValue proposal : proposals) {
 			if (proposal.getSlot() == slot) {
@@ -100,7 +142,7 @@ public class Leader extends Thread {
 		}
 		return false;
 	}
-	
+
 	private HashMap<Integer, PValue> pmax(Set<PValue> pValues) {
 		HashMap<Integer, PValue> pValueMap = new HashMap<Integer, PValue>();
 		for (PValue pValue : pValues) {
@@ -119,7 +161,7 @@ public class Leader extends Thread {
 		}
 		return pValueMap;
 	}
-	
+
 	private void updateProposals(HashMap<Integer, PValue> pValueMap) {
 		// Remove proposals for those slots for which pValueMap contains a
 		// proposal.
@@ -136,16 +178,31 @@ public class Leader extends Thread {
 		}
 	}
 
+	// Returns true only if the Leader was in a blocked state and detected that
+	// a majority of processes are up now. Does not return true if the leader
+	// was already unblocked.
+	private boolean unblocked() {
+		if (blocked) {
+			Set<Integer> dummy = new HashSet<>();
+			return !isBlocked(aliveSet, dummy, config.numServers / 2 + 1);
+		}
+		return false;
+	}
+
 	private int leaderId;
 	private int nextScoutId;
 	private int nextCommanderId;
 	private boolean active;
+	private boolean blocked;
 	private Ballot ballot;
 	private Set<SValue> proposals;
 	private HashMap<Integer, Scout> scouts;
 	private HashMap<Integer, Commander> commanders;
-	private BlockingQueue<Message> queue;
+	private BlockingQueue<Message> leaderQueue;
+	private HashMap<Integer, BlockingQueue<Message>> commanderQueues;
+	private HashMap<Integer, BlockingQueue<Message>> scoutQueues;
 	private BlockingQueue<Boolean> becomePrimary;
 	private NetController nc;
 	private Config config;
+	private int[] aliveSet;
 }

@@ -54,13 +54,13 @@ public class NetController {
 	 * TODO: Once commander finishes its execution it must remove its entry 
 	 * from this queue. 
 	 */
-	private HashMap<Integer,BlockingQueue<Message>> commanderQueue;
+	private HashMap<Integer,BlockingQueue<Message>> commanderQueues;
 	/*
 	 * Map of a scout to the queue used by it to retrieve its messages. 
 	 * TODO: Once scout finishes its execution it must remove its entry 
 	 * from this queue. 
 	 */
-	private HashMap<Integer,BlockingQueue<Message>> scoutQueue;
+	private HashMap<Integer,BlockingQueue<Message>> scoutQueues;
 	
 	private BlockingQueue<Message> heartbeatQueue;
 	
@@ -76,8 +76,8 @@ public class NetController {
 		this.leaderQueue = leaderQueue;
 		this.replicaQueue = replicaQueue;
 		this.acceptorQueue = acceptorQueue;
-		this.commanderQueue = commanderQueue;
-		this.scoutQueue = scoutQueue;
+		this.commanderQueues = commanderQueue;
+		this.scoutQueues = scoutQueue;
 		this.heartbeatQueue = heartbeatQueue;
 		this.config = config;
 		this.numOfServers = config.numServers;
@@ -126,11 +126,19 @@ public class NetController {
 	}
 
 	public BlockingQueue<Message> getCommanderQueue(int i) {
-		return commanderQueue.get(i);
+		return commanderQueues.get(i);
+	}
+	
+	public HashMap<Integer, BlockingQueue<Message>> getCommanderQueues() {
+		return commanderQueues;
 	}
 
 	public BlockingQueue<Message> getScoutQueue(int i) {
-		return scoutQueue.get(i);
+		return scoutQueues.get(i);
+	}
+	
+	public HashMap<Integer, BlockingQueue<Message>> getScoutQueues() {
+		return scoutQueues;
 	}
 
 	public BlockingQueue<Message> getHeartbeatQueue() {
