@@ -2,6 +2,7 @@ package ut.distcomp.paxos;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -22,14 +23,14 @@ public class Client {
 
 	public Client(int clientId, Config config) {
 		super();
-		this.chatLog = new ArrayList<>();
+		this.chatLog = new ArrayList<>(ChatLogSize);
 		this.clientId = clientId;
 		this.numOfServers = config.numServers;
 		this.clientQueue = new LinkedBlockingQueue<>();
 		this.config = config;
 		this.nc = new NetController(config, numOfServers, clientQueue);
-		this.outstandingRequests = Collections.synchronizedList(
-				new ArrayList<Integer>());
+		this.outstandingRequests = Collections
+				.synchronizedList(new ArrayList<Integer>());
 		startReceiveThread();
 	}
 
@@ -52,15 +53,15 @@ public class Client {
 		for (int i = 0; i < numOfServers; i++) {
 			Message msg = new Message(clientId, i);
 			int currentCommandId = getNextUniqueCommandNumber();
-			msg.setRequestContent(new Command(clientId, 
-					currentCommandId, CommandType.SEND_MSG, m));
+			msg.setRequestContent(new Command(clientId, currentCommandId,
+					CommandType.SEND_MSG, m));
 			outstandingRequests.add(currentCommandId);
 			if (nc.sendMessageToServer(i, msg)) {
-				config.logger.info("Succesfully sent to " + i + 
-						"\nMessage Sent : " + "\n" + msg.toString());
+				config.logger.info("Succesfully sent to " + i
+						+ "\nMessage Sent : " + "\n" + msg.toString());
 			} else {
-				config.logger.info("Unsuccessful send to " + i + 
-						"\nMessage Sent : " + "\n" + msg.toString());
+				config.logger.info("Unsuccessful send to " + i
+						+ "\nMessage Sent : " + "\n" + msg.toString());
 			}
 		}
 	}
@@ -83,25 +84,24 @@ public class Client {
 			while (true) {
 				try {
 					Message m = clientQueue.take();
-					List<String> listofMessages = m.getOutput();
-					// Update chat log if any new messages have arrived.
-					if(listofMessages.size() > chatLog.size()){
-						chatLog = listofMessages;
-						config.logger.info("Changed the state of chat log "
-								+ "consuming Message " + m.toString());
-					}
+					SValue sValue = m.getsValue();
+					chatLog.set(sValue.getSlot(), sValue.getCommand());
+					config.logger.info("Set " + sValue.getCommand().toString()
+							+ " at index " + sValue.getSlot());
 					// Remove an outstanding request if you have received.
-					if(m.getCommand().getClientId() == clientId){
-						int commandIdToBeRemoved = m.getCommand().getCommandId();
-						if(outstandingRequests.contains(commandIdToBeRemoved)){
+					if (sValue.getCommand().getClientId() == clientId) {
+						int commandIdToBeRemoved = sValue.getCommand()
+								.getCommandId();
+						if (outstandingRequests
+								.contains(commandIdToBeRemoved)) {
 							outstandingRequests.remove(commandIdToBeRemoved);
-							config.logger.info("Removed "+commandIdToBeRemoved +
-									" on receipt of message "+m.toString());
+							config.logger.info("Removed " + commandIdToBeRemoved
+									+ " on receipt of message " + m.toString());
 						}
 					}
 				} catch (InterruptedException e) {
-					config.logger.log(Level.SEVERE, "Client " + clientId + 
-							" interrupted while waiting for message");
+					config.logger.log(Level.SEVERE, "Client " + clientId
+							+ " interrupted while waiting for message");
 				}
 			}
 		}
@@ -111,7 +111,29 @@ public class Client {
 	 * Gets the client's chat log
 	 */
 	public List<String> getChatLog() {
-		return chatLog;
+		List<Command> addedCommands = new ArrayList<>();
+		for (int i = 0; i < chatLog.size(); i++) {
+			Command c = chatLog.get(i);
+			if (c != null && !addedCommands.contains(c)) {
+				addedCommands.add(c);
+			}
+		}
+		return getPrintMessages(addedCommands);
+	}
+
+	private List<String> getPrintMessages(List<Command> addedCommands) {
+		List<String> responseToMaster = new ArrayList<>();
+		for (int i = 0; i < addedCommands.size(); i++) {
+			Command c = addedCommands.get(i);
+			if (c != null) {
+				responseToMaster.add(formatCommand(i, c));
+			}
+		}
+		return responseToMaster;
+	}
+
+	private String formatCommand(int index, Command c) {
+		return index + " " + c.getClientId() + ":" + c.getInput();
 	}
 
 	/**
@@ -129,7 +151,7 @@ public class Client {
 	/**
 	 * Chat log of this client received from the servers.
 	 */
-	private List<String> chatLog;
+	private List<Command> chatLog;
 	/**
 	 * Command ID to be used while sending to a
 	 */
@@ -164,4 +186,6 @@ public class Client {
 	 * Reference to the receive thread
 	 */
 	private Thread receiveThread;
+
+	private static final int ChatLogSize = 100;
 }

@@ -3,7 +3,6 @@ package ut.distcomp.paxos;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import ut.distcomp.framework.Config;
@@ -20,7 +19,6 @@ public class Replica extends Thread {
 		this.queue = q;
 		this.replicaId = replicaId;
 		this.slotNum = 0;
-		this.state = new ArrayList<String>();
 		this.proposals = new HashSet<SValue>();
 		this.decisions = new HashSet<SValue>();
 	}
@@ -167,14 +165,11 @@ public class Replica extends Thread {
 			slotNum++;
 			return;
 		}
-		// Add the client ID with the message so that you can print in the
-		// original sender at client
-		state.add(c.getClientId() + ": " + c.getInput());
 		slotNum++;
 		// Broadcast the message to all clients
 		for (int i = 0; i < config.numClients; i++) {
 			Message msg = new Message(replicaId, i);
-			msg.setResponseContent(c, state);
+			msg.setResponseContent(new SValue(s,c), c.getInput());
 			nc.sendMessageToClient(i, msg);
 		}
 
@@ -241,7 +236,6 @@ public class Replica extends Thread {
 
 	private int slotNum;
 	private int replicaId;
-	private List<String> state;
 	private Set<SValue> proposals;
 	private Set<SValue> decisions;
 	private BlockingQueue<Message> queue;
