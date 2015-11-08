@@ -3,14 +3,15 @@ package ut.distcomp.paxos;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import ut.distcomp.framework.Config;
 import ut.distcomp.framework.NetController;
 import ut.distcomp.paxos.Message.NodeType;
 
 public class Scout extends Thread {
-	public Scout(Config config, NetController nc, int[] aliveSet, int leaderId,
-			int scoutId, Ballot b) {
+	public Scout(Config config, NetController nc, int[] aliveSet,
+			AtomicInteger numMsgsToSend, int leaderId, int scoutId, Ballot b) {
 		super();
 		this.config = config;
 		this.nc = nc;
@@ -19,6 +20,7 @@ public class Scout extends Thread {
 		this.scoutId = scoutId;
 		this.b = new Ballot(b);
 		this.aliveSet = aliveSet;
+		this.numMsgsToSend = numMsgsToSend;
 	}
 
 	public void run() {
@@ -26,6 +28,8 @@ public class Scout extends Thread {
 		Set<PValue> accepted = new HashSet<PValue>();
 		// Send P1A message to all acceptors.
 		sendP1AToAcceptors();
+		// TODO(asvenk) : Add a timer for this thread.
+		// When timer times out send a blocked message.
 		while (!Leader.isBlocked(aliveSet, received,
 				config.numServers / 2 + 1)) {
 			Message m = null;
@@ -76,9 +80,23 @@ public class Scout extends Thread {
 				"Sending P1A msg to all Acceptors for ballot:" + b.toString());
 		Message msg = null;
 		for (int acceptorId = 0; acceptorId < config.numServers; acceptorId++) {
-			msg = new Message(leaderId, acceptorId);
-			msg.setP1AContent(b, scoutId);
-			nc.sendMessageToServer(acceptorId, msg);
+			synchronized (numMsgsToSend) {
+				int curValue = numMsgsToSend.get();
+				if (curValue != -1) {
+					if (curValue == 0) {
+						config.logger.info("Not sending any more P2A messages. "
+								+ "\nWaiting to be killed");
+						break;
+					}
+				}
+				msg = new Message(leaderId, acceptorId);
+				msg.setP1AContent(b, scoutId);
+				nc.sendMessageToServer(acceptorId, msg);
+				// Decrement the number of messages to be sent.
+				if (curValue != -1) {
+					numMsgsToSend.decrementAndGet();
+				}
+			}
 		}
 	}
 
@@ -107,4 +125,5 @@ public class Scout extends Thread {
 	private NetController nc;
 	private Config config;
 	private int[] aliveSet;
+	private AtomicInteger numMsgsToSend;
 }
