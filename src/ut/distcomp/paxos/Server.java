@@ -102,7 +102,6 @@ public class Server {
 		// Retrieve a vote for the heartbeat thread.
 		heartbeatThread.recover();
 		config.logger.info("Retrived state for heartbeat");
-		// TODO: Send all messages from replica to leader ?
 		// TODO: Clear Queues ?
 		/*
 		 * TODO*: To make this asynchronous : All the threads should have a

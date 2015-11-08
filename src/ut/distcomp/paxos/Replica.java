@@ -60,6 +60,16 @@ public class Replica extends Thread {
 				}
 			}
 		}
+		sendProposalsToLeaderOnRecovery();
+	}
+	
+	// Send all proposals which aren't in decision to the leader.
+	private void sendProposalsToLeaderOnRecovery(){
+		Set<SValue> difference = new HashSet<>(proposals);
+		difference.removeAll(decisions);
+		for (SValue sValue : difference) {
+			propose(sValue.getCommand());
+		}
 	}
 
 	public void run() {
@@ -149,6 +159,7 @@ public class Replica extends Thread {
 		SValue proposal = new SValue(s1, c);
 		proposals.add(proposal);
 		// Send proposal to all leaders.
+		// TODO: Just send to your leader.
 		for (int leaderId = 0; leaderId < config.numServers; leaderId++) {
 			Message msg = new Message(replicaId, leaderId);
 			msg.setProposeContent(s1, c);
