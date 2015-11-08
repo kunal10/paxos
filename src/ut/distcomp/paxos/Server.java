@@ -26,6 +26,7 @@ public class Server {
 		this.nc = new NetController(config, leaderQueue, replicaQueue,
 				acceptorQueue, commanderQueues, scoutQueues, heartbeatQueue);
 		this.aliveSet = new int[config.numServers];
+		this.numMsgsToSend = new AtomicInteger(-1);
 	}
 
 	/**
@@ -101,8 +102,8 @@ public class Server {
 		acceptorThread = new Acceptor(config, nc, serverId);
 		heartbeatThread = new Heartbeat(config, nc, serverId, 0, becomePrimary,
 				aliveSet);
-		leaderThread = new Leader(config, nc, aliveSet, becomePrimary,
-				serverId);
+		leaderThread = new Leader(config, nc, aliveSet, numMsgsToSend,
+				becomePrimary, serverId);
 	}
 
 	private void startServerThreads() {
@@ -135,20 +136,18 @@ public class Server {
 	 * @param n
 	 */
 	public void timeBombLeader(int n) {
-		// TODO: Implement this.
 		if (isPrimaryLeader) {
-			// A number which is shared between two threads.
-			// Reset this number here.
-			// Both commander and scout increase this number while sending
-			// messages.
-			// Spawn a thread which checks whether this number is equal to n.
-			// As soon as its equal call kill()
-			numberOfMessagesToTimebomb.set(0);
+			numMsgsToSend.set(n);
 			Thread t = new Thread() {
 				@Override
 				public void run() {
-					while (numberOfMessagesToTimebomb.get() <= n) {
-						// Do nothing
+					while (numMsgsToSend.get() > 0) {
+						// Wait for primary to send n messages.
+						try {
+							Thread.sleep(10);
+						} catch (Exception e) {
+							config.logger.info(e.getMessage());
+						}
 					}
 					CrashServer();
 				}
@@ -216,5 +215,7 @@ public class Server {
 
 	int[] aliveSet;
 
-	AtomicInteger numberOfMessagesToTimebomb;
+	// Number of messages to be sent as primary before crashing the server.
+	// NOTE : Only P2A and P2B messages are counted.
+	AtomicInteger numMsgsToSend;
 }

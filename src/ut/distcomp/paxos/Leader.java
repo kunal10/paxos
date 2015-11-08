@@ -5,13 +5,15 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import ut.distcomp.framework.Config;
 import ut.distcomp.framework.NetController;
 
 public class Leader extends Thread {
 	public Leader(Config config, NetController nc, int[] aliveSet,
-			BlockingQueue<Boolean> becomePrimary, int leaderId) {
+			AtomicInteger numMsgsToSend, BlockingQueue<Boolean> becomePrimary,
+			int leaderId) {
 		super();
 		this.config = config;
 		this.nc = nc;
@@ -29,6 +31,7 @@ public class Leader extends Thread {
 		this.commanders = new HashMap<Integer, Commander>();
 		this.ballot = new Ballot(0, leaderId);
 		this.aliveSet = aliveSet;
+		this.numMsgsToSend = numMsgsToSend;
 	}
 
 	// Returns true if it is still possible to receive messages from a majority
@@ -127,8 +130,8 @@ public class Leader extends Thread {
 		BlockingQueue<Message> scoutQueue = new LinkedBlockingQueue<>();
 		scoutQueues.put(nextScoutId, scoutQueue);
 		// Add a new scout scout.
-		Scout scout = new Scout(config, nc, aliveSet, leaderId, nextScoutId,
-				ballot);
+		Scout scout = new Scout(config, nc, aliveSet, numMsgsToSend, leaderId,
+				nextScoutId, ballot);
 		scouts.put(nextScoutId, scout);
 		scout.run();
 		nextScoutId++;
@@ -140,8 +143,8 @@ public class Leader extends Thread {
 		BlockingQueue<Message> commanderQueue = new LinkedBlockingQueue<>();
 		commanderQueues.put(nextCommanderId, commanderQueue);
 		// Add a new commander.
-		Commander commander = new Commander(config, nc, aliveSet, leaderId,
-				nextCommanderId, pValue);
+		Commander commander = new Commander(config, nc, aliveSet, numMsgsToSend,
+				leaderId, nextCommanderId, pValue);
 		commanders.put(nextCommanderId, commander);
 		commander.run();
 		nextCommanderId++;
@@ -231,4 +234,5 @@ public class Leader extends Thread {
 	private NetController nc;
 	private Config config;
 	private int[] aliveSet;
+	AtomicInteger numMsgsToSend;
 }
