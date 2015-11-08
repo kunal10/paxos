@@ -2,9 +2,11 @@ package ut.distcomp.paxos;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
@@ -24,13 +26,13 @@ public class Client {
 
 	public Client(int clientId, Config config) {
 		super();
-		this.chatLog = new Command[ChatLogSize];
+		this.chatLog = new TreeMap<Integer, Command>();
 		this.clientId = clientId;
 		this.numOfServers = config.numServers;
 		this.clientQueue = new LinkedBlockingQueue<>();
 		this.config = config;
 		this.nc = new NetController(config, numOfServers, clientQueue);
-		this.outstandingRequests = new HashSet<>();
+		this.outstandingRequests = Collections.synchronizedSet(new HashSet<>());
 		startReceiveThread();
 	}
 
@@ -85,9 +87,10 @@ public class Client {
 				try {
 					Message m = clientQueue.take();
 					SValue sValue = m.getsValue();
-					chatLog[sValue.getSlot()] = sValue.getCommand();
-					config.logger.info("Set " + sValue.getCommand().toString()
-							+ " at index " + sValue.getSlot());
+					chatLog.put(sValue.getSlot(), sValue.getCommand());
+					config.logger
+							.info("\n\nSet " + sValue.getCommand().toString()
+									+ " at index " + sValue.getSlot());
 					// Remove an outstanding request if you have received.
 					if (sValue.getCommand().getClientId() == clientId) {
 						int commandIdToBeRemoved = sValue.getCommand()
@@ -99,6 +102,10 @@ public class Client {
 							config.logger.info("Removed " + commandIdToBeRemoved
 									+ " on receipt of message " + m.toString());
 						}
+					}
+					config.logger.info("\n\nRemaining Requests:");
+					for (Integer request : outstandingRequests) {
+						config.logger.info("\n" + request);
 					}
 				} catch (InterruptedException e) {
 					config.logger.log(Level.SEVERE, "Client " + clientId
@@ -113,14 +120,22 @@ public class Client {
 	 */
 	public List<String> getChatLog() {
 		List<Command> addedCommands = new ArrayList<>();
-		for (int i = 0; i < ChatLogSize; i++) {
-			Command c = chatLog[i];
-			if (c != null && !addedCommands.contains(c)) {
-				addedCommands.add(c);
-				for (Command command : addedCommands) {
-					config.logger.info(command.toString()+"\n----\n");
-				}
+		int curSlot = 0;
+		for (Integer slot : chatLog.keySet()) {
+			if (slot > curSlot) {
+				break;
 			}
+			Command c = chatLog.get(slot);
+			if (c == null) {
+				break;
+			}
+			if (!addedCommands.contains(c)) {
+				addedCommands.add(c);
+			}
+			curSlot++;
+		}
+		for (Command command : addedCommands) {
+			config.logger.info(command.toString() + "\n----\n");
 		}
 		return getPrintMessages(addedCommands);
 	}
@@ -153,10 +168,10 @@ public class Client {
 	}
 
 	/**
-	 * Chat log of this client received from the servers.
-	 * TODO: Change it to some different structure.
+	 * Chat log of this client received from the servers. TODO: Change it to
+	 * some different structure.
 	 */
-	private Command[] chatLog;
+	private SortedMap<Integer, Command> chatLog;
 	/**
 	 * Command ID to be used while sending to a
 	 */
@@ -185,12 +200,10 @@ public class Client {
 	 * keeps the list of all the outstanding requests to the server which is not
 	 * added yet.
 	 */
-	private HashSet<Integer> outstandingRequests;
+	private Set<Integer> outstandingRequests;
 
 	/**
 	 * Reference to the receive thread
 	 */
 	private Thread receiveThread;
-
-	private static final int ChatLogSize = 100;
 }

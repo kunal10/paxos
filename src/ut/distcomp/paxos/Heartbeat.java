@@ -55,7 +55,7 @@ public class Heartbeat extends Thread {
 			currentPlId.set(m.getPrimary());
 		} catch (Exception e) {
 			config.logger
-			.severe("Error in heartbeat queue wait :" + e.getMessage());
+					.severe("Error in heartbeat queue wait :" + e.getMessage());
 		}
 	}
 
@@ -135,8 +135,8 @@ public class Heartbeat extends Thread {
 					if (becomePrimary.offer(true)) {
 						config.logger.info("Elected as primary");
 					} else {
-						config.logger.info(
-								"Wasnt able to communicate to leader");
+						config.logger
+								.info("Wasnt able to communicate to leader");
 					}
 				}
 
@@ -146,40 +146,6 @@ public class Heartbeat extends Thread {
 			}
 		}
 
-		// Wait for a majority for any number other than -1 or the current
-		// primary
-		private int waitForMajorityToElectNewLeader() {
-			boolean leaderSet = false;
-			while (!leaderSet) {
-				int possibleLeader = checkMajority();
-				if (possibleLeader >= 0 && possibleLeader != currentPlId.get()) {
-					leaderSet = true;
-					return possibleLeader;
-				}
-			}
-			return -1;
-		}
-
-		private int checkMajority() {
-			int count = 0, i, majorityElement = -1;
-			for (i = 0; i < config.numServers; i++) {
-				if (count == 0)
-					majorityElement = primaryLeaderView[i];
-				if (primaryLeaderView[i] == majorityElement)
-					count++;
-				else
-					count--;
-			}
-			count = 0;
-			for (i = 0; i < config.numServers; i++)
-				if (primaryLeaderView[i] == majorityElement) {
-					count++;
-				}
-			if (count > config.numServers / 2) {
-				return majorityElement;
-			}
-			return -1;
-		}
 	}
 
 	class SendHeartBeatTask extends TimerTask {
@@ -191,6 +157,41 @@ public class Heartbeat extends Thread {
 				// config.logger.log("", msg, thrown);
 			}
 		}
+	}
+
+	// Wait for a majority for any number other than -1 or the current
+	// primary
+	private int waitForMajorityToElectNewLeader() {
+		boolean leaderSet = false;
+		while (!leaderSet) {
+			int possibleLeader = checkMajority();
+			if (possibleLeader >= 0 && possibleLeader != currentPlId.get()) {
+				leaderSet = true;
+				return possibleLeader;
+			}
+		}
+		return -1;
+	}
+
+	private int checkMajority() {
+		int count = 0, i, majorityElement = -1;
+		for (i = 0; i < config.numServers; i++) {
+			if (count == 0)
+				majorityElement = primaryLeaderView[i];
+			if (primaryLeaderView[i] == majorityElement)
+				count++;
+			else
+				count--;
+		}
+		count = 0;
+		for (i = 0; i < config.numServers; i++)
+			if (primaryLeaderView[i] == majorityElement) {
+				count++;
+			}
+		if (count > config.numServers / 2) {
+			return majorityElement;
+		}
+		return -1;
 	}
 
 	@Override
@@ -232,8 +233,8 @@ public class Heartbeat extends Thread {
 		// config.logger.info(pId + " Adding timer for "+m.getSrc());
 		addTimerForServer((m.getSrc()));
 		primaryLeaderView[m.getSrc()] = m.getPrimary();
-//		config.logger.info("Set the primary value of "
-//				+ primaryLeaderView[m.getSrc()] + " to " + m.getPrimary());
+		// config.logger.info("Set the primary value of "
+		// + primaryLeaderView[m.getSrc()] + " to " + m.getPrimary());
 	}
 
 	/**
@@ -252,7 +253,7 @@ public class Heartbeat extends Thread {
 	private NetController nc;
 	private Config config;
 	private BlockingQueue<Message> heartbeatQueue;
-	// In heartbeat this is the votes of all servers. 
+	// In heartbeat this is the votes of all servers.
 	// If its set to -1 then that process is dead
 	private int[] primaryLeaderView;
 	private BlockingQueue<Boolean> becomePrimary;

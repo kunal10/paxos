@@ -102,14 +102,14 @@ public class Master {
 		 * Currently the call is blocking. So no additional code is required.
 		 */
 		List<Integer> aliveServers = getAliveServers(numServers);
-		// System.out.println("Alive Servers");
-//		for (Integer integer : aliveServers) {
-//			System.out.println(integer);
-//		}
+		 System.out.println("Alive Servers");
+		 for (Integer integer : aliveServers) {
+		 System.out.println(integer);
+		 }
 		if (aliveServers.size() > (numServers / 2)) {
 			waitForServersToFinishProtocol(aliveServers, numServers);
 			waitForAllClientsToBeServiced(numClients);
-		}else {
+		} else {
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
@@ -125,7 +125,7 @@ public class Master {
 				// Do nothing while all clients have got decisions
 				// for all their commands.
 			}
-			// System.out.println("All commands for client "+i+" are done.");
+			System.out.println("All commands for client "+i+" are done.");
 		}
 	}
 
@@ -149,10 +149,11 @@ public class Master {
 						&& servers[index].IsServerExecutingProtocol()) {
 					// Do nothing till the server is executing protocol.
 				}
-				// System.out.println("Alive server "+index+" has finished.");
+				System.out.println("Alive server "+index+" has finished.");
 			}
 		} else {
 			// There is a minority. Cannot continue with protocol.
+			System.out.println("There is no majority. All clear");
 			return;
 		}
 

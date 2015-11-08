@@ -93,7 +93,13 @@ public class Acceptor extends Thread {
 				config.logger.info("Received P2A msg:" + m.toString());
 				if (b2 != null && b2.compareTo(ballot) >= 0) {
 					ballot = b2;
-					accepted.add(new PValue(ballot, m.getsValue()));
+					try {
+						accepted.add(new PValue(ballot, m.getsValue()));
+					} catch (Exception e) {
+						config.logger.severe("Error receive P2A  : Server ID :" + acceptorId
+								+ " Message :" + m.toString());
+					}
+
 				}
 				msg2.setP2BContent(ballot, m.getThreadId());
 				config.logger.info("Sending P2B msg:" + msg2.toString());

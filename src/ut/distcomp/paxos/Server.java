@@ -37,7 +37,9 @@ public class Server {
 		heartbeatThread.shutDown();
 		killThread(heartbeatThread);
 		heartbeatQueue = null;
-		leaderThread.killAllScoutsAndCommander();
+		if (leaderThread != null) {
+			leaderThread.killAllScoutsAndCommander();
+		}
 		killThread(leaderThread);
 		leaderThread = null;
 		killThread(replicaThread);

@@ -203,14 +203,18 @@ public class Leader extends Thread {
 	}
 
 	public void killAllScoutsAndCommander() {
-		for (Commander c : commanders.values()) {
-			if (c != null) {
-				c.stop();
+		if (commanders != null) {
+			for (Commander c : commanders.values()) {
+				if (c != null) {
+					c.stop();
+				}
 			}
 		}
-		for (Scout s : scouts.values()) {
-			if (s != null) {
-				s.stop();
+		if (scouts != null) {
+			for (Scout s : scouts.values()) {
+				if (s != null) {
+					s.stop();
+				}
 			}
 		}
 	}
