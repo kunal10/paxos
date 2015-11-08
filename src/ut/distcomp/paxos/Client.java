@@ -43,6 +43,12 @@ public class Client {
 		receiveThread = new Thread(new ReceiveHandler());
 		receiveThread.start();
 	}
+	
+	public void CrashClient(){
+		if(receiveThread != null){
+			receiveThread.stop();
+		}
+	}
 
 	/**
 	 * Interface used by the master to send message to a chatroom. The client
@@ -107,9 +113,10 @@ public class Client {
 					for (Integer request : outstandingRequests) {
 						config.logger.info("\n" + request);
 					}
-				} catch (InterruptedException e) {
+				} catch (Exception e) {
 					config.logger.log(Level.SEVERE, "Client " + clientId
 							+ " interrupted while waiting for message");
+					return;
 				}
 			}
 		}

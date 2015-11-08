@@ -61,6 +61,7 @@ public class Leader extends Thread {
 			spawnScout();
 		} catch (Exception e) {
 			config.logger.info(e.getMessage());
+			return;
 		}
 		while (true) {
 			if (unblocked()) {
@@ -78,7 +79,7 @@ public class Leader extends Thread {
 				config.logger.info("Leader received msg: " + m.toString());
 			} catch (Exception e) {
 				config.logger.severe(e.getMessage());
-				continue;
+				return;
 			}
 			switch (m.getMsgType()) {
 			case PROPOSE:
