@@ -3,6 +3,7 @@ package ut.distcomp.paxos;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import ut.distcomp.framework.Config;
 import ut.distcomp.framework.NetController;
@@ -10,7 +11,8 @@ import ut.distcomp.paxos.Message.NodeType;
 
 public class Commander extends Thread {
 	public Commander(Config config, NetController nc, int[] aliveSet,
-			int leaderId, int commanderId, PValue pValue) {
+			AtomicInteger numMsgsToSend, int leaderId, int commanderId,
+			PValue pValue) {
 		super();
 		this.config = config;
 		this.nc = nc;
@@ -19,12 +21,15 @@ public class Commander extends Thread {
 		this.commanderId = commanderId;
 		this.pValue = new PValue(pValue);
 		this.aliveSet = aliveSet;
+		this.numMsgsToSend = numMsgsToSend;
 	}
 
 	public void run() {
 		Set<Integer> received = new HashSet<Integer>();
 		// Send P2A message to all acceptors.
 		sendP2AToAcceptors();
+		// TODO(asvenk) : Add a timer for this thread.
+		// When timer times out send a blocked message.
 		while (!Leader.isBlocked(aliveSet, received,
 				config.numServers / 2 + 1)) {
 			Message m = null;
@@ -71,9 +76,23 @@ public class Commander extends Thread {
 				+ pValue.toString());
 		Message msg = null;
 		for (int acceptorId = 0; acceptorId < config.numServers; acceptorId++) {
-			msg = new Message(leaderId, acceptorId);
-			msg.setP2AContent(pValue, commanderId);
-			nc.sendMessageToServer(acceptorId, msg);
+			synchronized (numMsgsToSend) {
+				int curValue = numMsgsToSend.get();
+				if (curValue != -1) {
+					if (curValue == 0) {
+						config.logger.info("Not sending any more P2A messages. "
+								+ "\nWaiting to be killed");
+						break;
+					}
+				}
+				msg = new Message(leaderId, acceptorId);
+				msg.setP2AContent(pValue, commanderId);
+				nc.sendMessageToServer(acceptorId, msg);
+				// Decrement the number of messages to be sent.
+				if (curValue != -1) {
+					numMsgsToSend.decrementAndGet();
+				}
+			}
 		}
 	}
 
@@ -87,7 +106,7 @@ public class Commander extends Thread {
 			nc.sendMessageToServer(replicaId, msg);
 		}
 	}
-	
+
 	private void sendPreEmptedToLeader(Ballot b1) {
 		config.logger.info(String.format(
 				"Sending PreEmpted message from commader %d to leader %d: ",
@@ -113,4 +132,5 @@ public class Commander extends Thread {
 	private NetController nc;
 	private Config config;
 	private int[] aliveSet;
+	AtomicInteger numMsgsToSend;
 }
