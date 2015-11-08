@@ -79,10 +79,11 @@ public class Master {
 				break;
 			case "timeBombLeader":
 				int numMessages = Integer.parseInt(inputLine[1]);
-				/*
-				 * Instruct the leader to crash after sending the number of
-				 * paxos related messages specified by numMessages
-				 */
+				for (int i = 0; i < numNodes; i++) {
+					if (servers[i].IsServerAlive()) {
+						servers[i].timeBombLeader(numMessages);
+					}
+				}
 				break;
 			}
 		}
@@ -102,9 +103,9 @@ public class Master {
 		 */
 		List<Integer> aliveServers = getAliveServers(numServers);
 		// System.out.println("Alive Servers");
-		for (Integer integer : aliveServers) {
-			System.out.println(integer);
-		}
+//		for (Integer integer : aliveServers) {
+//			System.out.println(integer);
+//		}
 		if (aliveServers.size() > (numServers / 2)) {
 			waitForServersToFinishProtocol(aliveServers, numServers);
 			waitForAllClientsToBeServiced(numClients);

@@ -53,8 +53,9 @@ public class Heartbeat extends Thread {
 			// Just adopt a value from any heartbeat.
 			primaryLeaderView[serverId] = m.getPrimary();
 			currentPlId.set(m.getPrimary());
-		} catch (InterruptedException e) {
-
+		} catch (Exception e) {
+			config.logger
+			.severe("Error in heartbeat queue wait :" + e.getMessage());
 		}
 	}
 
@@ -127,19 +128,15 @@ public class Heartbeat extends Thread {
 				config.logger.info("Setting vote for new leader to "
 						+ primaryLeaderView[serverId]);
 				int newLeader = waitForMajorityToElectNewLeader();
-				// int newLeader = 1;
 				config.logger.info("Majority elected leader as " + newLeader);
 				primaryLeaderView[serverId] = newLeader;
 				currentPlId.set(newLeader);
 				if (newLeader == serverId) {
-					config.logger.info(
-							"The elected leader matches my " + "server ID");
 					if (becomePrimary.offer(true)) {
-						config.logger.info("Informed my leader to become "
-								+ "primary leader");
+						config.logger.info("Elected as primary");
 					} else {
 						config.logger.info(
-								"Wasnt able to communicate to " + "my leader");
+								"Wasnt able to communicate to leader");
 					}
 				}
 
@@ -221,10 +218,6 @@ public class Heartbeat extends Thread {
 		Message m = null;
 		try {
 			m = heartbeatQueue.take();
-		} catch (InterruptedException e) {
-			config.logger.log(Level.SEVERE, "Error in waiting on heartbeat"
-					+ " queue : " + e.getMessage());
-			return;
 		} catch (Exception e) {
 			config.logger
 					.severe("Error in heartbeat queue wait :" + e.getMessage());

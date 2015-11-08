@@ -35,9 +35,9 @@ public class Commander extends Thread {
 			Message m = null;
 			try {
 				m = queue.take();
-			} catch (InterruptedException e) {
+			} catch (Exception e) {
 				config.logger.severe(e.getMessage());
-				continue;
+				return;
 			}
 			Ballot b = pValue.getBallot();
 			Ballot b1 = m.getBallot();

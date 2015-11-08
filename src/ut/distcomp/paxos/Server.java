@@ -35,17 +35,15 @@ public class Server {
 	public void CrashServer() {
 		nc.shutdown();
 		heartbeatThread.shutDown();
-		leaderThread.killAllScoutsAndCommander();
 		killThread(heartbeatThread);
 		heartbeatQueue = null;
+		leaderThread.killAllScoutsAndCommander();
 		killThread(leaderThread);
 		leaderThread = null;
 		killThread(replicaThread);
 		replicaThread = null;
 		killThread(acceptorThread);
 		acceptorThread = null;
-		// TODO: Kill any timebomb leader thread.
-
 	}
 
 	private void killThread(Thread t) {
