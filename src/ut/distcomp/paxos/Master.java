@@ -18,9 +18,13 @@ public class Master {
 		int numNodes = 0, numClients = 0;
 
 		while (scan.hasNextLine()) {
-			String[] inputLine = scan.nextLine().split(" ");
+			String line = scan.nextLine();
+			if (line.compareTo("exit") == 0) {
+				break;
+			}
+			String[] inputLine = line.split(" ");
 			int clientIndex, nodeIndex;
-			System.out.println(inputLine[0]);
+			//System.out.println(inputLine[0]);
 			switch (inputLine[0]) {
 			case "start":
 				numNodes = Integer.parseInt(inputLine[1]);
@@ -87,6 +91,14 @@ public class Master {
 				break;
 			}
 		}
+		for (Client c : clients) {
+			c.CrashClient();
+		}
+		for (Server s : servers) {
+			s.CrashServer();
+		}
+		System.exit(0);
+		return;
 	}
 
 	private static void printChatlog(int clientIndex) {
@@ -102,10 +114,10 @@ public class Master {
 		 * Currently the call is blocking. So no additional code is required.
 		 */
 		List<Integer> aliveServers = getAliveServers(numServers);
-		 System.out.println("Alive Servers");
-		 for (Integer integer : aliveServers) {
-		 System.out.println(integer);
-		 }
+		// System.out.println("Alive Servers");
+		for (Integer integer : aliveServers) {
+			// System.out.println(integer);
+		}
 		if (aliveServers.size() > (numServers / 2)) {
 			waitForServersToFinishProtocol(aliveServers, numServers);
 			waitForAllClientsToBeServiced(numClients);
@@ -125,7 +137,7 @@ public class Master {
 				// Do nothing while all clients have got decisions
 				// for all their commands.
 			}
-			System.out.println("All commands for client "+i+" are done.");
+			// System.out.println("All commands for client " + i + " are done.");
 		}
 	}
 
@@ -149,11 +161,11 @@ public class Master {
 						&& servers[index].IsServerExecutingProtocol()) {
 					// Do nothing till the server is executing protocol.
 				}
-				System.out.println("Alive server "+index+" has finished.");
+				// System.out.println("Alive server " + index + " has finished.");
 			}
 		} else {
 			// There is a minority. Cannot continue with protocol.
-			System.out.println("There is no majority. All clear");
+			// System.out.println("There is no majority. All clear");
 			return;
 		}
 

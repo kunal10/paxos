@@ -45,6 +45,7 @@ public class Heartbeat extends Thread {
 
 	public void recover() {
 		config.logger.info("Retriving heartbeat..");
+		heartbeatQueue.clear();
 		try {
 			Message m = heartbeatQueue.take();
 			config.logger.info("Retriving heartbeat from " + m.toString());
@@ -54,6 +55,7 @@ public class Heartbeat extends Thread {
 		} catch (Exception e) {
 			config.logger
 					.severe("Error in heartbeat queue wait :" + e.getMessage());
+			return;
 		}
 	}
 
@@ -96,7 +98,7 @@ public class Heartbeat extends Thread {
 
 	private void addTimerForServer(int i) {
 		try {
-			int delay = 1200;
+			int delay = Config.HeartbeatConsumptionFrequency;
 			TimerTask tti = new ElectNewLeaderOnTimeoutTask(i);
 			exisitingTimers.put(i, tti);
 			timer.schedule(tti, delay);

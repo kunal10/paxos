@@ -2,6 +2,8 @@ package ut.distcomp.paxos;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -26,12 +28,21 @@ public class Commander extends Thread {
 
 	public void run() {
 		Set<Integer> received = new HashSet<Integer>();
+		BooleanRef timeoutSet = new BooleanRef(false);
+		boolean isTimerSet = false;
 		// Send P2A message to all acceptors.
 		sendP2AToAcceptors();
+		
 		// TODO(asvenk) : Add a timer for this thread.
 		// When timer times out send a blocked message.
 		while (!Leader.isBlocked(aliveSet, received,
-				config.numServers / 2 + 1)) {
+				config.numServers / 2 + 1) && !timeoutSet.getValue()) {
+			if(!isTimerSet){
+				isTimerSet = true;
+				Timer t = new Timer();
+				TimeoutUtil tu = new TimeoutUtil(timeoutSet);
+				t.schedule(tu, 2000);
+			}
 			Message m = null;
 			try {
 				m = queue.take();

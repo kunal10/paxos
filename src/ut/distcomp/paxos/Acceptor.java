@@ -32,9 +32,13 @@ public class Acceptor extends Thread {
 				if (nc.sendMessageToServer(i, m)) {
 					try {
 						Message recoverMessage = queue.take();
-						config.logger
-								.info("Received a acceptor recovery message "
-										+ "" + recoverMessage.toString());
+						while (recoverMessage
+								.getMsgType() != ut.distcomp.paxos.Message.MessageType.STATE_RES){
+							recoverMessage = queue.take();
+						}
+							config.logger
+									.info("Received a acceptor recovery message "
+											+ "" + recoverMessage.toString());
 						Ballot b = recoverMessage.getBallot();
 						config.logger.info("Received Ballot : " + b.toString());
 						// Build a increasing set while recovery.
@@ -43,9 +47,10 @@ public class Acceptor extends Thread {
 							accepted = recoverMessage.getAccepted();
 						}
 
-					} catch (InterruptedException e) {
+					} catch (Exception e) {
 						config.logger.severe("Interrupted while waiting for "
 								+ "" + "acceptor recovery");
+						return;
 					}
 				}
 			}
@@ -59,7 +64,7 @@ public class Acceptor extends Thread {
 				m = queue.take();
 			} catch (Exception e) {
 				config.logger.severe(e.getMessage());
-				continue;
+				return;
 			}
 			switch (m.getMsgType()) {
 			case STATE_RES:
@@ -96,8 +101,8 @@ public class Acceptor extends Thread {
 					try {
 						accepted.add(new PValue(ballot, m.getsValue()));
 					} catch (Exception e) {
-						config.logger.severe("Error receive P2A  : Server ID :" + acceptorId
-								+ " Message :" + m.toString());
+						config.logger.severe("Error receive P2A  : Server ID :"
+								+ acceptorId + " Message :" + m.toString());
 					}
 
 				}

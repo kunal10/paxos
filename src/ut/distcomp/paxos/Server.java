@@ -91,7 +91,7 @@ public class Server {
 	// Retrieve state for Replica.
 	private void recoverServerState() {
 		try {
-			Thread.sleep(Config.QueueTimeoutVal);
+			Thread.sleep(Config.RevivalDelay);
 		} catch (InterruptedException e) {
 		}
 		// Retrieve state for replica.

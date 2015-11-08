@@ -31,40 +31,35 @@ public class Replica extends Thread {
 				m.setStateRequestContent(NodeType.REPLICA);
 				if (nc.sendMessageToServer(i, m)) {
 					try {
-						/*
-						 * Message recoverMsg =
-						 * queue.poll(Config.QueueTimeoutVal,
-						 * TimeUnit.MILLISECONDS);
-						 */
 						Message recoverMsg = queue.take();
-						if (recoverMsg != null) {
-							if (recoverMsg
-									.getMsgType() == MessageType.STATE_RES) {
-								decisions = recoverMsg.getDecisions();
-								proposals = recoverMsg.getProposals();
-								break;
-							} else {
-								config.logger
-										.info("Received non state response :"
-												+ "" + recoverMsg.toString());
-							}
+						while (recoverMsg
+								.getMsgType() != ut.distcomp.paxos.Message.MessageType.STATE_RES) {
+							recoverMsg = queue.take();
+						}
+						if (recoverMsg
+								.getMsgType() == MessageType.STATE_RES) {
+							decisions = recoverMsg.getDecisions();
+							proposals = recoverMsg.getProposals();
+							break;
 						} else {
-							config.logger.info("Timed out on " + i
-									+ " while retriving replica state");
+							config.logger
+									.info("Received non state response :"
+											+ "" + recoverMsg.toString());
 						}
 
-					} catch (InterruptedException e) {
+					} catch (Exception e) {
 						config.logger.severe("Interrupted while receiving "
 								+ "replica state");
+						return;
 					}
 				}
 			}
 		}
 		sendProposalsToLeaderOnRecovery();
 	}
-	
+
 	// Send all proposals which aren't in decision to the leader.
-	private void sendProposalsToLeaderOnRecovery(){
+	private void sendProposalsToLeaderOnRecovery() {
 		Set<SValue> difference = new HashSet<>(proposals);
 		difference.removeAll(decisions);
 		for (SValue sValue : difference) {
@@ -79,17 +74,17 @@ public class Replica extends Thread {
 				m = queue.take();
 			} catch (InterruptedException e) {
 				config.logger.severe(e.getMessage());
-				continue;
+				return;
 			} catch (Exception e) {
 				config.logger.severe(e.getMessage());
-				continue;
+				return;
 			}
 			switch (m.getMsgType()) {
 			case STATE_RES:
 				config.logger.info("Received State Response:" + m.toString());
-				config.logger.info(
-						"This will be ignored since the first message received"
-						+ " is already consumed");
+				config.logger
+						.info("This will be ignored since the first message received"
+								+ " is already consumed");
 			case STATE_REQ:
 				config.logger.info("Received State Request:" + m.toString());
 				Message response = new Message(replicaId, m.getSrc());
@@ -179,7 +174,7 @@ public class Replica extends Thread {
 		// Broadcast the message to all clients
 		for (int i = 0; i < config.numClients; i++) {
 			Message msg = new Message(replicaId, i);
-			msg.setResponseContent(new SValue(s,c), c.getInput());
+			msg.setResponseContent(new SValue(s, c), c.getInput());
 			nc.sendMessageToClient(i, msg);
 		}
 
