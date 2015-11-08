@@ -5,8 +5,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-
 import ut.distcomp.framework.Config;
 import ut.distcomp.framework.NetController;
 
@@ -67,7 +65,7 @@ public class Heartbeat extends Thread {
 				}
 				Message m = new Message(serverId, dest);
 				m.setHeartBeatContent(primaryLeaderView[serverId]);
-				//config.logger.info("Sending heartbeat to " + dest);
+				// config.logger.info("Sending heartbeat to " + dest);
 				nc.sendMessageToServer(dest, m);
 			}
 		} catch (Exception e) {
@@ -125,11 +123,12 @@ public class Heartbeat extends Thread {
 						"Detected death of current leader " + currentPlId);
 				primaryLeaderView[serverId] = (currentPlId.get() + 1)
 						% config.numServers;
-				config.logger.info("Setting vote for new leader to "
-						+ primaryLeaderView[serverId]);
-				int newLeader = waitForMajorityToElectNewLeader();
-				config.logger.info("Majority elected leader as " + newLeader);
-				primaryLeaderView[serverId] = newLeader;
+				config.logger.info(
+						"Setting new leader to " + primaryLeaderView[serverId]);
+				int newLeader = primaryLeaderView[serverId];
+				// int newLeader = waitForMajorityToElectNewLeader();
+				// config.logger.info("Majority elected leader as " + newLeader);
+				// primaryLeaderView[serverId] = newLeader;
 				currentPlId.set(newLeader);
 				if (newLeader == serverId) {
 					if (becomePrimary.offer(true)) {
@@ -139,7 +138,6 @@ public class Heartbeat extends Thread {
 								.info("Wasnt able to communicate to leader");
 					}
 				}
-
 			} else {
 				// Add a new timer even for a failed process.
 				addTimerForServer(failedProcess);
@@ -233,8 +231,9 @@ public class Heartbeat extends Thread {
 		// config.logger.info(pId + " Adding timer for "+m.getSrc());
 		addTimerForServer((m.getSrc()));
 		primaryLeaderView[m.getSrc()] = m.getPrimary();
-		// config.logger.info("Set the primary value of "
-		// + primaryLeaderView[m.getSrc()] + " to " + m.getPrimary());
+		if (m.getPrimary() == serverId) {
+			becomePrimary.offer(true);
+		}
 	}
 
 	/**

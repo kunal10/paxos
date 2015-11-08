@@ -11,10 +11,10 @@ local.properties
 .loadpath
 
 # Log files.
-# *Log*
+*Log*
 
 # Text files.
-* *.txt 
+*.txt 
 
 # Configs
 *SimulationConfig*
