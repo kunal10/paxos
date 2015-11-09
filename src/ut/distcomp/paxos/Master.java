@@ -121,11 +121,10 @@ public class Master {
 		if (aliveServers.size() > (numServers / 2)) {
 			waitForServersToFinishProtocol(aliveServers, numServers);
 			waitForAllClientsToBeServiced(numClients);
-		} else {
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-			}
+		}
+		try {
+			Thread.sleep(Config.RevivalDelay + 2 * Config.HeartbeatFrequency);
+		} catch (InterruptedException e) {
 		}
 	}
 

@@ -25,28 +25,33 @@ public class Replica extends Thread {
 
 	// Interacts with other replicas to recover the lost state.
 	public void recover() {
+		config.logger.info("Retriving state for replica");
 		for (int i = 0; i < config.numServers; i++) {
 			if (i != replicaId) {
+				// TODO(asvenk) : Consider having 2 functions:
+				// sendStateReq and waitForStateResponse.
 				Message m = new Message(replicaId, i);
 				m.setStateRequestContent(NodeType.REPLICA);
+				// TODO(asvenk) : What if the server for whom you are waiting
+				// fails. Although no new servers are killed, previously time-
+				// bombed leader can die. This will block in that case.
 				if (nc.sendMessageToServer(i, m)) {
 					try {
 						Message recoverMsg = queue.take();
 						while (recoverMsg
-								.getMsgType() != ut.distcomp.paxos.Message.MessageType.STATE_RES) {
+								.getMsgType() != MessageType.STATE_RES) {
 							recoverMsg = queue.take();
 						}
-						if (recoverMsg
-								.getMsgType() == MessageType.STATE_RES) {
+						// TODO(asvenk) : Can this ever happen ??
+						// If not then clean up.
+						if (recoverMsg.getMsgType() == MessageType.STATE_RES) {
 							decisions = recoverMsg.getDecisions();
 							proposals = recoverMsg.getProposals();
 							break;
 						} else {
-							config.logger
-									.info("Received non state response :"
-											+ "" + recoverMsg.toString());
+							config.logger.info("Received non state response :"
+									+ "" + recoverMsg.toString());
 						}
-
 					} catch (Exception e) {
 						config.logger.severe("Interrupted while receiving "
 								+ "replica state");
@@ -56,6 +61,7 @@ public class Replica extends Thread {
 			}
 		}
 		sendProposalsToLeaderOnRecovery();
+		config.logger.info("Finished recovery for replica");
 	}
 
 	// Send all proposals which aren't in decision to the leader.

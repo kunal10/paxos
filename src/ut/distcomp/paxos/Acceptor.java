@@ -25,6 +25,7 @@ public class Acceptor extends Thread {
 
 	// Interacts with other replicas to recover the lost state.
 	public void recover() {
+		config.logger.info("Retrived state for acceptor");
 		for (int i = 0; i < config.numServers; i++) {
 			if (i != acceptorId) {
 				Message m = new Message(acceptorId, i);
@@ -55,6 +56,7 @@ public class Acceptor extends Thread {
 				}
 			}
 		}
+		config.logger.info("Finished recovery for acceptor");
 	}
 
 	public void run() {

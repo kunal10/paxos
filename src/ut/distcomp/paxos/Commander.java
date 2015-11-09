@@ -32,8 +32,6 @@ public class Commander extends Thread {
 		// Send P2A message to all acceptors.
 		sendP2AToAcceptors();
 
-		// TODO(asvenk) : Add a timer for this thread.
-		// When timer times out send a blocked message.
 		while (!Leader.isBlocked(aliveSet, received, config.numServers / 2 + 1)
 				&& !timeout.getValue()) {
 			// Start the timer if its not already started.
@@ -137,7 +135,7 @@ public class Commander extends Thread {
 		if (timer == null) {
 			timer = new Timer();
 			TimeoutUtil tu = new TimeoutUtil(timeout);
-			timer.schedule(tu, 2000);
+			timer.schedule(tu, 1000);
 		}
 	}
 

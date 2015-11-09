@@ -1,7 +1,9 @@
 package ut.distcomp.paxos;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -27,8 +29,10 @@ public class Leader extends Thread {
 		this.active = false;
 		this.blocked = false;
 		this.proposals = new HashSet<SValue>();
-		this.scouts = new HashMap<Integer, Scout>();
-		this.commanders = new HashMap<Integer, Commander>();
+		this.scouts = Collections
+				.synchronizedMap(new HashMap<Integer, Scout>());
+		this.commanders = Collections
+				.synchronizedMap(new HashMap<Integer, Commander>());
 		this.ballot = new Ballot(0, leaderId);
 		this.aliveSet = aliveSet;
 		this.numMsgsToSend = numMsgsToSend;
@@ -121,13 +125,17 @@ public class Leader extends Thread {
 
 	public boolean areScoutsCommandersDead() {
 		boolean b = true;
-		for (Scout s : scouts.values()) {
-			boolean isDeadOrNull = (s == null) || !s.isAlive();
-			b = b && isDeadOrNull;
+		synchronized (scouts) {
+			for (Scout s : scouts.values()) {
+				boolean isDeadOrNull = (s == null) || !s.isAlive();
+				b = b && isDeadOrNull;
+			}
 		}
-		for (Commander c : commanders.values()) {
-			boolean isDeadOrNull = (c == null) || !c.isAlive();
-			b = b && isDeadOrNull;
+		synchronized (commanders) {
+			for (Commander c : commanders.values()) {
+				boolean isDeadOrNull = (c == null) || !c.isAlive();
+				b = b && isDeadOrNull;
+			}
 		}
 		return b;
 	}
@@ -238,8 +246,8 @@ public class Leader extends Thread {
 	private boolean blocked;
 	private Ballot ballot;
 	private Set<SValue> proposals;
-	private HashMap<Integer, Scout> scouts;
-	private HashMap<Integer, Commander> commanders;
+	private Map<Integer, Scout> scouts;
+	private Map<Integer, Commander> commanders;
 	private BlockingQueue<Message> leaderQueue;
 	private HashMap<Integer, BlockingQueue<Message>> commanderQueues;
 	private HashMap<Integer, BlockingQueue<Message>> scoutQueues;

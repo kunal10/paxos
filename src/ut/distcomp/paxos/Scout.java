@@ -128,7 +128,7 @@ public class Scout extends Thread {
 		if (timer == null) {
 			timer = new Timer();
 			TimeoutUtil tu = new TimeoutUtil(timeout);
-			timer.schedule(tu, 2000);
+			timer.schedule(tu, 1000);
 		}
 	}
 

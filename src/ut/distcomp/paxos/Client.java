@@ -124,7 +124,7 @@ public class Client {
 					Message m = clientQueue.take();
 					decideSlot(m.getsValue());
 				} catch (Exception e) {
-					config.logger.log(Level.SEVERE, "Client " + clientId
+					config.logger.log(Level.SEVERE, "\nClient " + clientId
 							+ " interrupted while waiting for message");
 					return;
 				}
@@ -134,14 +134,14 @@ public class Client {
 
 	private void decideSlot(SValue sValue) {
 		if (sValue == null) {
-			config.logger.severe("Received NULL sValue in decideSlot");
+			config.logger.severe("\nReceived NULL sValue in decideSlot");
 			return;
 		}
 		synchronized (chatLog) {
 			chatLog.put(sValue.getSlot(), sValue.getCommand());
 		}
-		config.logger.info("\nReceived " + sValue.getCommand().toString()
-				+ " at index " + sValue.getSlot());
+		config.logger.info("\n\nReceived " + sValue.getCommand().toString()
+				+ "\tat index " + sValue.getSlot());
 		removeOutstandingRequest(sValue.getCommand());
 	}
 
@@ -165,8 +165,10 @@ public class Client {
 
 	private void printOutstandingRequests() {
 		config.logger.info("\nOutstanding Requests:");
-		for (Integer request : outstandingRequests) {
-			config.logger.info("\t" + request);
+		synchronized (outstandingRequests) {
+			for (Integer request : outstandingRequests) {
+				config.logger.info("\t" + request);
+			}
 		}
 	}
 

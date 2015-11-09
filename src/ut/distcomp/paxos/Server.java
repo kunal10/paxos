@@ -61,18 +61,6 @@ public class Server {
 	public void StartServer() {
 		initializeServerThreads();
 		startServerThreads();
-		try {
-			Thread.sleep(100);
-		} catch (InterruptedException e1) {
-		}
-		if (serverId == 0) {
-			if (becomePrimary.offer(true)) {
-				config.logger.info("Set primary to 0 on start of the system");
-			} else {
-				config.logger.info(
-						"Did not set primary to 0 on start of the system:");
-			}
-		}
 	}
 
 	/**
@@ -96,13 +84,10 @@ public class Server {
 		}
 		// Retrieve state for replica.
 		replicaThread.recover();
-		config.logger.info("Retrived state for replica");
 		// Retrieve state for acceptor.
 		acceptorThread.recover();
-		config.logger.info("Retrived state for acceptor");
 		// Retrieve a vote for the heartbeat thread.
 		heartbeatThread.recover();
-		config.logger.info("Retrived state for heartbeat");
 		// TODO: Clear Queues ?
 		/*
 		 * TODO*: To make this asynchronous : All the threads should have a
@@ -127,6 +112,20 @@ public class Server {
 		heartbeatThread.start();
 		acceptorThread.start();
 		leaderThread.start();
+		// Wait for leader thread to start.
+		try {
+			Thread.sleep(100);
+		} catch (InterruptedException e) {
+			config.logger.severe(e.getMessage());
+		}
+		if (serverId == currentPrimaryLeader.getValue()) {
+			if (becomePrimary.offer(true)) {
+				config.logger.info("Becoming primary on start/recovery");
+			} else {
+				config.logger
+						.severe("Could not become primary on start/recovery");
+			}
+		}
 	}
 
 	public boolean IsServerAlive() {
