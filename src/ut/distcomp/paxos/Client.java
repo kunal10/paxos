@@ -160,7 +160,7 @@ public class Client {
 	}
 
 	private String formatCommand(int index, Command c) {
-		return index + " " + c.getClientId() + ":" + c.getInput();
+		return index + " " + c.getClientId() + ": " + c.getInput();
 	}
 
 	/**
