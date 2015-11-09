@@ -31,7 +31,6 @@ public class Scout extends Thread {
 		BooleanWrapper timeout = new BooleanWrapper(false);
 		// Send P1A message to all acceptors.
 		sendP1AToAcceptors();
-		// TODO(asvenk) : Add a timer for this thread.
 		// When timer times out send a blocked message.
 		while (!Leader.isBlocked(aliveSet, received,
 				config.numServers / 2 + 1)) {

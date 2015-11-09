@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
+
 import ut.distcomp.framework.Config;
 import ut.distcomp.framework.NetController;
 import ut.distcomp.paxos.Message.MessageType;
@@ -28,48 +30,60 @@ public class Replica extends Thread {
 		config.logger.info("Retriving state for replica");
 		for (int i = 0; i < config.numServers; i++) {
 			if (i != replicaId) {
-				// TODO(asvenk) : Consider having 2 functions:
-				// sendStateReq and waitForStateResponse.
-				Message m = new Message(replicaId, i);
-				m.setStateRequestContent(NodeType.REPLICA);
-				// TODO(asvenk) : What if the server for whom you are waiting
-				// fails. Although no new servers are killed, previously time-
-				// bombed leader can die. This will block in that case.
-				if (nc.sendMessageToServer(i, m)) {
-					try {
-						Message recoverMsg = queue.take();
-						while (recoverMsg
-								.getMsgType() != MessageType.STATE_RES) {
-							recoverMsg = queue.take();
-						}
-						// TODO(asvenk) : Can this ever happen ??
-						// If not then clean up.
-						if (recoverMsg.getMsgType() == MessageType.STATE_RES) {
-							decisions = recoverMsg.getDecisions();
-							proposals = recoverMsg.getProposals();
-							break;
-						} else {
-							config.logger.info("Received non state response :"
-									+ "" + recoverMsg.toString());
-						}
-					} catch (Exception e) {
-						config.logger.severe("Interrupted while receiving "
-								+ "replica state");
-						return;
-					}
+				sendStateRequest(i);
+				Message recoverMessage = waitForStateResponse();
+				if (recoverMessage != null) {
+					config.logger.info("Retriving state from message "
+							+ recoverMessage.toString());
+					decisions = recoverMessage.getDecisions();
+					proposals = recoverMessage.getProposals();
+					// TODO : Check
+					break;
 				}
 			}
 		}
 		sendProposalsToLeaderOnRecovery();
-		config.logger.info("Finished recovery for replica");
+
+	}
+
+	private Message waitForStateResponse() {
+		Message recoverMsg = null;
+		try {
+			recoverMsg = queue.poll(Config.QueuePollTimeout,
+					TimeUnit.MILLISECONDS);
+			while (recoverMsg.getMsgType() != MessageType.STATE_RES) {
+				recoverMsg = queue.take();
+			}
+		} catch (Exception e) {
+			config.logger
+					.severe("Interrupted while receiving " + "replica state");
+		}
+		return recoverMsg;
+	}
+
+	private void sendStateRequest(int dest) {
+		Message m = new Message(replicaId, dest);
+		m.setStateRequestContent(NodeType.REPLICA);
+		if (!nc.sendMessageToServer(dest, m)) {
+			config.logger.info("Send of state request to " + dest + " failed");
+		} else {
+			config.logger
+					.info("Send of state request to " + dest + " successful");
+		}
 	}
 
 	// Send all proposals which aren't in decision to the leader.
 	private void sendProposalsToLeaderOnRecovery() {
 		Set<SValue> difference = new HashSet<>(proposals);
-		difference.removeAll(decisions);
-		for (SValue sValue : difference) {
-			propose(sValue.getCommand());
+		if (difference != null) {
+			difference.removeAll(decisions);
+			for (SValue sValue : difference) {
+				propose(sValue.getCommand());
+			}
+			config.logger.info("Finished recovery for replica");
+		} else {
+			config.logger.info(
+					"Unsuccessful recovery for replica. Proposals is null on recovery");
 		}
 	}
 
@@ -159,14 +173,11 @@ public class Replica extends Thread {
 		int s1 = getNextFreeSlot();
 		SValue proposal = new SValue(s1, c);
 		proposals.add(proposal);
-		// Send proposal to all leaders.
-		// TODO: Just send to your leader.
-		// for (int leaderId = 0; leaderId < config.numServers; leaderId++) {
+		// Send proposal to your leaders.
 		Message msg = new Message(replicaId, replicaId);
 		msg.setProposeContent(s1, c);
 		config.logger.info("Sending Propose msg:" + msg.toString());
 		nc.sendMessageToServer(replicaId, msg);
-		// }
 	}
 
 	private void perform(Command c) {

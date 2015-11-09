@@ -102,6 +102,8 @@ public class Config {
 	public static final int HeartbeatFrequency = 1000;
 	
 	public static final int RevivalDelay = HeartbeatTimeout * 2;
+	
+	public static final int QueuePollTimeout = 1000;
 }
 
 class MyFormatter extends Formatter {

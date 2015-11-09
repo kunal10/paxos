@@ -3,9 +3,11 @@ package ut.distcomp.paxos;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import ut.distcomp.framework.Config;
 import ut.distcomp.framework.NetController;
+import ut.distcomp.paxos.Message.MessageType;
 import ut.distcomp.paxos.Message.NodeType;
 
 /**
@@ -25,38 +27,49 @@ public class Acceptor extends Thread {
 
 	// Interacts with other replicas to recover the lost state.
 	public void recover() {
-		config.logger.info("Retrived state for acceptor");
+		config.logger.info("Retriving state for acceptor");
 		for (int i = 0; i < config.numServers; i++) {
 			if (i != acceptorId) {
-				Message m = new Message(acceptorId, i);
-				m.setStateRequestContent(NodeType.ACCEPTOR);
-				if (nc.sendMessageToServer(i, m)) {
-					try {
-						Message recoverMessage = queue.take();
-						while (recoverMessage
-								.getMsgType() != ut.distcomp.paxos.Message.MessageType.STATE_RES){
-							recoverMessage = queue.take();
-						}
-							config.logger
-									.info("Received a acceptor recovery message "
-											+ "" + recoverMessage.toString());
-						Ballot b = recoverMessage.getBallot();
-						config.logger.info("Received Ballot : " + b.toString());
-						// Build a increasing set while recovery.
-						if (b.compareTo(ballot) > 0) {
-							ballot = b;
-							accepted = recoverMessage.getAccepted();
-						}
-
-					} catch (Exception e) {
-						config.logger.severe("Interrupted while waiting for "
-								+ "" + "acceptor recovery");
-						return;
-					}
+				sendStateRequest(i);
+				Message recoverMessage = waitForStateResponse();
+				if (recoverMessage != null) {
+					config.logger.info("Retriving state from message "
+							+ recoverMessage.toString());
+					ballot = recoverMessage.getBallot();
+					accepted = recoverMessage.getAccepted();
 				}
 			}
 		}
 		config.logger.info("Finished recovery for acceptor");
+	}
+
+	// TODO: Is poll okay ?
+	private Message waitForStateResponse() {
+		Message recoverMsg = null;
+		try {
+			recoverMsg = queue.poll(Config.QueuePollTimeout,
+					TimeUnit.MILLISECONDS);
+			while (recoverMsg.getMsgType() != MessageType.STATE_RES) {
+				recoverMsg = queue.poll(Config.QueuePollTimeout,
+						TimeUnit.MILLISECONDS);
+			}
+		} catch (Exception e) {
+			config.logger
+					.severe("Interrupted while receiving " + "replica state");
+		}
+		return recoverMsg;
+	}
+
+	private void sendStateRequest(int dest) {
+		Message m = new Message(acceptorId, dest);
+		m.setStateRequestContent(NodeType.ACCEPTOR);
+		if (!nc.sendMessageToServer(dest, m)) {
+			config.logger.info(
+					"Acceptor : Send of state request to " + dest + " failed");
+		} else {
+			config.logger.info("Acceptor : Send of state request to " + dest
+					+ " successful");
+		}
 	}
 
 	public void run() {
@@ -72,7 +85,6 @@ public class Acceptor extends Thread {
 			case STATE_RES:
 				config.logger.info(
 						"Ignoring Received STATE_RES msg:" + m.toString());
-				config.logger.info("Shouldn't have received at this point");
 				break;
 			case STATE_REQ:
 				config.logger.info("Received STATE_REQ msg:" + m.toString());

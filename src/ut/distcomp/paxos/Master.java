@@ -12,7 +12,7 @@ public class Master {
 
 	static Server[] servers = null;
 	static Client[] clients = null;
-
+	// TODO: Remove sysouts
 	public static void main(String[] args) {
 		Scanner scan = new Scanner(System.in);
 		int numNodes = 0, numClients = 0;
@@ -24,7 +24,7 @@ public class Master {
 			}
 			String[] inputLine = line.split(" ");
 			int clientIndex, nodeIndex;
-			// System.out.println(inputLine[0]);
+			System.out.println(inputLine[0]);
 			switch (inputLine[0]) {
 			case "start":
 				numNodes = Integer.parseInt(inputLine[1]);
@@ -107,12 +107,6 @@ public class Master {
 		initializeClients(numNodes, numClients);
 		initializeServers(numNodes, numClients);
 		startServers();
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 	}
 
 	private static void printChatlog(int clientIndex) {
@@ -132,10 +126,11 @@ public class Master {
 			waitForServersToFinishProtocol(aliveServers, numServers);
 			waitForAllClientsToBeServiced(numClients);
 		}
-		try {
-			Thread.sleep(Config.RevivalDelay + 2 * Config.HeartbeatFrequency);
-		} catch (InterruptedException e) {
-		}
+		// TODO(klad): Check this ?
+//		try {
+//			Thread.sleep(Config.RevivalDelay + 2 * Config.HeartbeatFrequency);
+//		} catch (InterruptedException e) {
+//		}
 	}
 
 	private static void waitForAllClientsToBeServiced(int numClients) {
