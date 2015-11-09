@@ -54,7 +54,8 @@ public class Replica extends Thread {
 			recoverMsg = queue.poll(Config.QueuePollTimeout,
 					TimeUnit.MILLISECONDS);
 			while (recoverMsg.getMsgType() != MessageType.STATE_RES) {
-				recoverMsg = queue.take();
+				recoverMsg = queue.poll(Config.QueuePollTimeout,
+						TimeUnit.MILLISECONDS);
 			}
 		} catch (Exception e) {
 			config.logger
