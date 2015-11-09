@@ -45,10 +45,10 @@ public class Client {
 		receiveThread = new Thread(new ReceiveHandler());
 		receiveThread.start();
 	}
-	
-	public void CrashClient(){
+
+	public void CrashClient() {
 		nc.shutdown();
-		if(receiveThread != null){
+		if (receiveThread != null) {
 			receiveThread.stop();
 		}
 	}
@@ -82,8 +82,35 @@ public class Client {
 	 * 
 	 * @return
 	 */
-	public boolean areAllCommandsExecuted() {
+	public boolean allCommandsExecuted() {
 		return outstandingRequests.size() == 0;
+	}
+
+	/**
+	 * Gets the client's chat log
+	 */
+	public List<String> getChatLog() {
+		List<Command> addedCommands = new ArrayList<>();
+		int curSlot = 0;
+		synchronized (chatLog) {
+			for (Integer slot : chatLog.keySet()) {
+				if (slot > curSlot) {
+					break;
+				}
+				Command c = chatLog.get(slot);
+				if (c == null) {
+					break;
+				}
+				if (!addedCommands.contains(c)) {
+					addedCommands.add(c);
+				}
+				curSlot++;
+			}
+		}
+		for (Command command : addedCommands) {
+			config.logger.info(command.toString() + "\n----\n");
+		}
+		return getPrintMessages(addedCommands);
 	}
 
 	/**
@@ -95,27 +122,7 @@ public class Client {
 			while (true) {
 				try {
 					Message m = clientQueue.take();
-					SValue sValue = m.getsValue();
-					chatLog.put(sValue.getSlot(), sValue.getCommand());
-					config.logger
-							.info("\n\nSet " + sValue.getCommand().toString()
-									+ " at index " + sValue.getSlot());
-					// Remove an outstanding request if you have received.
-					if (sValue.getCommand().getClientId() == clientId) {
-						int commandIdToBeRemoved = sValue.getCommand()
-								.getCommandId();
-						if (outstandingRequests
-								.contains(commandIdToBeRemoved)) {
-							outstandingRequests.remove(
-									Integer.valueOf(commandIdToBeRemoved));
-							config.logger.info("Removed " + commandIdToBeRemoved
-									+ " on receipt of message " + m.toString());
-						}
-					}
-					config.logger.info("\n\nRemaining Requests:");
-					for (Integer request : outstandingRequests) {
-						config.logger.info("\n" + request);
-					}
+					decideSlot(m.getsValue());
 				} catch (Exception e) {
 					config.logger.log(Level.SEVERE, "Client " + clientId
 							+ " interrupted while waiting for message");
@@ -125,29 +132,42 @@ public class Client {
 		}
 	}
 
-	/**
-	 * Gets the client's chat log
-	 */
-	public List<String> getChatLog() {
-		List<Command> addedCommands = new ArrayList<>();
-		int curSlot = 0;
-		for (Integer slot : chatLog.keySet()) {
-			if (slot > curSlot) {
-				break;
-			}
-			Command c = chatLog.get(slot);
-			if (c == null) {
-				break;
-			}
-			if (!addedCommands.contains(c)) {
-				addedCommands.add(c);
-			}
-			curSlot++;
+	private void decideSlot(SValue sValue) {
+		if (sValue == null) {
+			config.logger.severe("Received NULL sValue in decideSlot");
+			return;
 		}
-		for (Command command : addedCommands) {
-			config.logger.info(command.toString() + "\n----\n");
+		synchronized (chatLog) {
+			chatLog.put(sValue.getSlot(), sValue.getCommand());
 		}
-		return getPrintMessages(addedCommands);
+		config.logger.info("\nReceived " + sValue.getCommand().toString()
+				+ " at index " + sValue.getSlot());
+		removeOutstandingRequest(sValue.getCommand());
+	}
+
+	// Removes the request from the set of out standing requests if it has not
+	// already been removed.
+	private void removeOutstandingRequest(Command c) {
+		if (c == null) {
+			config.logger
+					.severe("Null command passed to removeOutstandingRequest");
+			return;
+		}
+		if (c.getClientId() == clientId) {
+			int cId = c.getCommandId();
+			if (outstandingRequests.contains(cId)) {
+				outstandingRequests.remove(Integer.valueOf(cId));
+				config.logger.info("\nRemoved " + cId);
+			}
+		}
+		printOutstandingRequests();
+	}
+
+	private void printOutstandingRequests() {
+		config.logger.info("\nOutstanding Requests:");
+		for (Integer request : outstandingRequests) {
+			config.logger.info("\t" + request);
+		}
 	}
 
 	private List<String> getPrintMessages(List<Command> addedCommands) {
@@ -178,7 +198,7 @@ public class Client {
 	}
 
 	/**
-	 * Chat log of this client received from the servers. 
+	 * Chat log of this client received from the servers.
 	 */
 	private SortedMap<Integer, Command> chatLog;
 	/**

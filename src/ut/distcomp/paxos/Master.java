@@ -132,7 +132,7 @@ public class Master {
 	private static void waitForAllClientsToBeServiced(int numClients) {
 		// Check if all clients are serviced
 		for (int i = 0; i < numClients; i++) {
-			while (!clients[i].areAllCommandsExecuted()) {
+			while (!clients[i].allCommandsExecuted()) {
 				// Do nothing while all clients have got decisions
 				// for all their commands.
 			}
