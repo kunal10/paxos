@@ -28,6 +28,8 @@ public class Acceptor extends Thread {
 	// Interacts with other replicas to recover the lost state.
 	public void recover() {
 		config.logger.info("Retriving state for acceptor");
+		// TODO : Should you run this in while loop till you get a recovery
+		// message since there has to be one process which has to reply
 		for (int i = 0; i < config.numServers; i++) {
 			if (i != acceptorId) {
 				sendStateRequest(i);
@@ -37,6 +39,7 @@ public class Acceptor extends Thread {
 							+ recoverMessage.toString());
 					ballot = recoverMessage.getBallot();
 					accepted = recoverMessage.getAccepted();
+					break;
 				}
 			}
 		}
