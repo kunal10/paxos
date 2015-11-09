@@ -2,7 +2,23 @@ package ut.distcomp.paxos;
 
 import java.util.TimerTask;
 
-class BooleanRef {
+class IntegerWrapper {
+	public int getValue() {
+		return value;
+	}
+
+	public void setValue(int value) {
+		this.value = value;
+	}
+
+	public IntegerWrapper(int i) {
+		value = i;
+	}
+
+	private int value;
+};
+
+class BooleanWrapper {
 	public boolean getValue() {
 		return value;
 	}
@@ -11,21 +27,21 @@ class BooleanRef {
 		this.value = value;
 	}
 
-	public BooleanRef(boolean b){
+	public BooleanWrapper(boolean b) {
 		value = b;
 	}
-	
+
 	private boolean value;
 };
 
-public class TimeoutUtil extends TimerTask{
-	
-	public TimeoutUtil(BooleanRef timeOut) {
+public class TimeoutUtil extends TimerTask {
+
+	public TimeoutUtil(BooleanWrapper timeOut) {
 		super();
 		this.timeOut = timeOut;
 	}
 
-	BooleanRef timeOut;
+	BooleanWrapper timeOut;
 
 	@Override
 	public void run() {

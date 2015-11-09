@@ -22,25 +22,21 @@ public class Scout extends Thread {
 		this.b = new Ballot(b);
 		this.aliveSet = aliveSet;
 		this.numMsgsToSend = numMsgsToSend;
+		this.timer = null;
 	}
 
 	public void run() {
 		Set<Integer> received = new HashSet<Integer>();
 		Set<PValue> accepted = new HashSet<PValue>();
-		BooleanRef timeoutSet = new BooleanRef(false);
-		boolean isTimerSet = false;
+		BooleanWrapper timeout = new BooleanWrapper(false);
 		// Send P1A message to all acceptors.
 		sendP1AToAcceptors();
 		// TODO(asvenk) : Add a timer for this thread.
 		// When timer times out send a blocked message.
 		while (!Leader.isBlocked(aliveSet, received,
 				config.numServers / 2 + 1)) {
-			if(!isTimerSet){
-				isTimerSet = true;
-				Timer t = new Timer();
-				TimeoutUtil tu = new TimeoutUtil(timeoutSet);
-				t.schedule(tu, 2000);
-			}
+			// Start the timer if its not already started.
+			startTimer(timeout);
 			Message m = null;
 			try {
 				m = queue.take();
@@ -127,6 +123,15 @@ public class Scout extends Thread {
 		nc.sendMessageToServer(leaderId, msg);
 	}
 
+	// Start the timer if its not already started.
+	private void startTimer(BooleanWrapper timeout) {
+		if (timer == null) {
+			timer = new Timer();
+			TimeoutUtil tu = new TimeoutUtil(timeout);
+			timer.schedule(tu, 2000);
+		}
+	}
+
 	private int leaderId;
 	private int scoutId;
 	private Ballot b;
@@ -135,4 +140,5 @@ public class Scout extends Thread {
 	private Config config;
 	private int[] aliveSet;
 	private AtomicInteger numMsgsToSend;
+	private Timer timer;
 }

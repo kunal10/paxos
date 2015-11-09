@@ -3,7 +3,6 @@ package ut.distcomp.paxos;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -24,25 +23,21 @@ public class Commander extends Thread {
 		this.pValue = new PValue(pValue);
 		this.aliveSet = aliveSet;
 		this.numMsgsToSend = numMsgsToSend;
+		this.timer = null;
 	}
 
 	public void run() {
 		Set<Integer> received = new HashSet<Integer>();
-		BooleanRef timeoutSet = new BooleanRef(false);
-		boolean isTimerSet = false;
+		BooleanWrapper timeout = new BooleanWrapper(false);
 		// Send P2A message to all acceptors.
 		sendP2AToAcceptors();
-		
+
 		// TODO(asvenk) : Add a timer for this thread.
 		// When timer times out send a blocked message.
-		while (!Leader.isBlocked(aliveSet, received,
-				config.numServers / 2 + 1) && !timeoutSet.getValue()) {
-			if(!isTimerSet){
-				isTimerSet = true;
-				Timer t = new Timer();
-				TimeoutUtil tu = new TimeoutUtil(timeoutSet);
-				t.schedule(tu, 2000);
-			}
+		while (!Leader.isBlocked(aliveSet, received, config.numServers / 2 + 1)
+				&& !timeout.getValue()) {
+			// Start the timer if its not already started.
+			startTimer(timeout);
 			Message m = null;
 			try {
 				m = queue.take();
@@ -65,6 +60,7 @@ public class Commander extends Thread {
 					if (received.size() >= (config.numServers / 2 + 1)) {
 						// Send the decision to all replicas.
 						sendDecisionToReplicas();
+
 						return;
 					}
 				} else {
@@ -136,6 +132,15 @@ public class Commander extends Thread {
 		nc.sendMessageToServer(leaderId, msg);
 	}
 
+	// Start the timer if its not already started.
+	private void startTimer(BooleanWrapper timeout) {
+		if (timer == null) {
+			timer = new Timer();
+			TimeoutUtil tu = new TimeoutUtil(timeout);
+			timer.schedule(tu, 2000);
+		}
+	}
+
 	private int leaderId;
 	private int commanderId;
 	private PValue pValue;
@@ -143,5 +148,6 @@ public class Commander extends Thread {
 	private NetController nc;
 	private Config config;
 	private int[] aliveSet;
-	AtomicInteger numMsgsToSend;
+	private AtomicInteger numMsgsToSend;
+	private Timer timer;
 }

@@ -97,11 +97,11 @@ public class Config {
 	 */
 	public int numServers;
 
-	public static final int HeartbeatTimeout = 250;
+	public static final int HeartbeatTimeout = 1200;
 	
-	public static final int HeartbeatFrequency = 200;
+	public static final int HeartbeatFrequency = 1000;
 	
-	public static final int RevivalDelay = HeartbeatTimeout * 3;
+	public static final int RevivalDelay = HeartbeatTimeout * 2;
 }
 
 class MyFormatter extends Formatter {

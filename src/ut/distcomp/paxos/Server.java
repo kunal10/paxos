@@ -22,7 +22,7 @@ public class Server {
 		this.commanderQueues = new HashMap<>();
 		this.scoutQueues = new HashMap<>();
 		this.becomePrimary = new SynchronousQueue<>();
-		this.currentPrimaryLeader = new AtomicInteger(0);
+		this.currentPrimaryLeader = new IntegerWrapper(0);
 		this.nc = new NetController(config, leaderQueue, replicaQueue,
 				acceptorQueue, commanderQueues, scoutQueues, heartbeatQueue);
 		this.aliveSet = new int[config.numServers];
@@ -152,7 +152,7 @@ public class Server {
 	 * @param n
 	 */
 	public void timeBombLeader(int n) {
-		if (currentPrimaryLeader.get() == serverId) {
+		if (currentPrimaryLeader.getValue() == serverId) {
 			numMsgsToSend.set(n);
 			Thread t = new Thread() {
 				@Override
@@ -227,11 +227,11 @@ public class Server {
 
 	SynchronousQueue<Boolean> becomePrimary;
 
-	AtomicInteger currentPrimaryLeader;
+	IntegerWrapper currentPrimaryLeader;
 
 	int[] aliveSet;
 
 	// Number of messages to be sent as primary before crashing the server.
 	// NOTE : Only P2A and P2B messages are counted.
-	AtomicInteger numMsgsToSend;
+	private AtomicInteger numMsgsToSend;
 }

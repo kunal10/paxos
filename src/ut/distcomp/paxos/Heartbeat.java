@@ -12,7 +12,7 @@ public class Heartbeat extends Thread {
 
 	public Heartbeat(Config config, NetController nc, int serverId,
 			int startPrimaryLeader, BlockingQueue<Boolean> becomePrimary,
-			int[] primaryLeaderView, AtomicInteger currentPrimaryLeader) {
+			int[] primaryLeaderView, IntegerWrapper currentPrimaryLeader) {
 		super();
 		this.config = config;
 		this.nc = nc;
@@ -51,7 +51,7 @@ public class Heartbeat extends Thread {
 			config.logger.info("Retriving heartbeat from " + m.toString());
 			// Just adopt a value from any heartbeat.
 			primaryLeaderView[serverId] = m.getPrimary();
-			currentPlId.set(m.getPrimary());
+			currentPlId.setValue(m.getPrimary());
 		} catch (Exception e) {
 			config.logger
 					.severe("Error in heartbeat queue wait :" + e.getMessage());
@@ -67,8 +67,10 @@ public class Heartbeat extends Thread {
 				}
 				Message m = new Message(serverId, dest);
 				m.setHeartBeatContent(primaryLeaderView[serverId]);
-				// config.logger.info("Sending heartbeat to " + dest);
-				nc.sendMessageToServer(dest, m);
+				config.logger.info("Sending heartbeat to " + dest);
+				if (!nc.sendMessageToServer(dest, m)) {
+					config.logger.info("Failed to send HB to: " + dest);
+				}
 			}
 		} catch (Exception e) {
 			config.logger.severe(
@@ -117,29 +119,31 @@ public class Heartbeat extends Thread {
 
 		@Override
 		public void run() {
-			synchronized (currentPlId) {
-				config.logger.info("Detected death of " + failedProcess
-						+ " and current primary is " + currentPlId);
-				primaryLeaderView[failedProcess] = -1;
-				if (failedProcess == currentPlId.get()) {
-					primaryLeaderView[serverId] = (currentPlId.get() + 1)
-							% config.numServers;
-					config.logger.info("Setting new leader to "
-							+ primaryLeaderView[serverId]);
-					int newLeader = primaryLeaderView[serverId];
-					currentPlId.set(newLeader);
-					if (newLeader == serverId) {
-						if (becomePrimary.offer(true)) {
-							config.logger.info("Elected as primary");
-						} else {
-							config.logger.info(
-									"Wasnt able to communicate to leader");
-						}
+			// synchronized (currentPlId) {
+			config.logger.info("Detected death of " + failedProcess
+					+ " and current primary is " + currentPlId.getValue());
+			primaryLeaderView[failedProcess] = -1;
+			if (failedProcess == currentPlId.getValue()) {
+				primaryLeaderView[serverId] = (currentPlId.getValue() + 1)
+						% config.numServers;
+				config.logger.info(
+						"Setting new leader to " + primaryLeaderView[serverId]);
+				int newLeader = primaryLeaderView[serverId];
+				currentPlId.setValue(newLeader);
+				if (newLeader == serverId) {
+					if (becomePrimary.offer(true)) {
+						config.logger.info("Elected as primary");
+					} else {
+						config.logger
+								.info("Wasnt able to communicate to leader");
 					}
-				} 
+				}
+			} else {
 				// Add a new timer even for a failed process.
+				config.logger.info("Adding timer for: " + failedProcess);
 				addTimerForServer(failedProcess);
 			}
+			// }
 		}
 
 	}
@@ -149,7 +153,7 @@ public class Heartbeat extends Thread {
 			try {
 				sendHeartBeat();
 			} catch (Exception e) {
-				e.printStackTrace();
+				config.logger.severe(e.getMessage());
 				// config.logger.log("", msg, thrown);
 			}
 		}
@@ -181,27 +185,26 @@ public class Heartbeat extends Thread {
 					.severe("Error in heartbeat queue wait :" + e.getMessage());
 			return;
 		}
+		int srcId = m.getSrc();
 		// Disable the timer if a timer is running for that process.
-		if (exisitingTimers.containsKey(m.getSrc())) {
+		if (exisitingTimers.containsKey(srcId)) {
 			// config.logger.info("Received HB msg : " + m.toString());
-			exisitingTimers.get(m.getSrc()).cancel();
+			exisitingTimers.get(srcId).cancel();
 		}
 		// Add a new timer for the process which has sent a heartbeat
-		// config.logger.info(pId + " Adding timer for "+m.getSrc());
-		addTimerForServer((m.getSrc()));
+		config.logger.info("Adding new timer for "+m.getSrc());
 		primaryLeaderView[m.getSrc()] = m.getPrimary();
-		synchronized (currentPlId) {
-			if (currentPlId.get() != serverId && m.getPrimary() == serverId) {
-				config.logger
-						.info("Becoming primary because of: " + m.toString());
-				becomePrimary.offer(true);
-				currentPlId.set(serverId);
-			}
-		}
+		// synchronized (currentPlId) {
+//		if (currentPlId.getValue() != serverId && m.getPrimary() == serverId) {
+//			becomePrimary.offer(true);
+//			currentPlId.setValue(serverId);
+//		}
+		addTimerForServer(srcId);
+		// }
 	}
 
 	/**
-	 * Maintain the exisisting set of timers for all alive processes.
+	 * Maintain the existing set of timers for all alive processes.
 	 */
 	HashMap<Integer, TimerTask> exisitingTimers;
 	/**
@@ -212,7 +215,7 @@ public class Heartbeat extends Thread {
 	// TimerTask to send heart beats
 	TimerTask tt;
 	private int serverId;
-	private AtomicInteger currentPlId;
+	private IntegerWrapper currentPlId;
 	private NetController nc;
 	private Config config;
 	private BlockingQueue<Message> heartbeatQueue;

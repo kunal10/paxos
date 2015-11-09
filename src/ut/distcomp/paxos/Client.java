@@ -27,12 +27,14 @@ public class Client {
 	public Client(int clientId, Config config) {
 		super();
 		this.chatLog = new TreeMap<Integer, Command>();
+		this.commandId = 0;
 		this.clientId = clientId;
 		this.numOfServers = config.numServers;
 		this.clientQueue = new LinkedBlockingQueue<>();
 		this.config = config;
 		this.nc = new NetController(config, numOfServers, clientQueue);
 		this.outstandingRequests = Collections.synchronizedSet(new HashSet<>());
+		this.receiveThread = null;
 		startReceiveThread();
 	}
 
