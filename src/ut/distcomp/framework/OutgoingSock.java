@@ -14,13 +14,13 @@ import java.net.Socket;
 import ut.distcomp.paxos.Message;
 
 public class OutgoingSock {
-	
+	final static byte[] MSG_SEP = "&".getBytes();
 	Socket sock;
 	ObjectOutputStream out;
 	
-	protected OutgoingSock(Socket sock) throws IOException {
+	protected OutgoingSock(Socket sock, ObjectOutputStream outputStream) throws IOException {
 		this.sock = sock;
-		out = new ObjectOutputStream(sock.getOutputStream());
+		out = outputStream;
 		sock.shutdownInput();
 	}
 	

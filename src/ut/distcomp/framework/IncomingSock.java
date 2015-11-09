@@ -32,7 +32,7 @@ public class IncomingSock extends Thread {
 	BlockingQueue<Message> clientQueue;
 	BlockingQueue<Message> heartbeatQueue;
 
-	public IncomingSock(Socket sock, Logger logger,
+	public IncomingSock(Socket sock, ObjectInputStream inputStream, Logger logger,
 			BlockingQueue<Message> leaderQueue,
 			BlockingQueue<Message> replicaQueue,
 			BlockingQueue<Message> acceptorQueue,
@@ -41,7 +41,7 @@ public class IncomingSock extends Thread {
 			BlockingQueue<Message> heartbeatQueue,
 			BlockingQueue<Message> clientQueue2) throws IOException {
 		this.sock = sock;
-		in = new ObjectInputStream(sock.getInputStream());
+		in = inputStream;
 		sock.shutdownOutput();
 		this.leaderQueue = leaderQueue;
 		this.replicaQueue = replicaQueue;
