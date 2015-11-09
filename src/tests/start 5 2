@@ -1,0 +1,61 @@
+start 5 2
+
+crashServer 0
+
+sendMessage 0 HelloWorld
+
+printChatLog 0
+0 0:HelloWorld
+
+printChatLog 1
+0 0:HelloWorld
+
+crashServer 1
+
+sendMessage 1 Crashed second primary
+
+printChatLog 0
+0 0:HelloWorld
+1 1:Crashed second primary
+
+printChatLog 1
+0 0:HelloWorld
+1 1:Crashed second primary
+
+crashServer 4
+
+sendMessage 0 HelloWorld 
+
+printChatLog 0
+0 0:HelloWorld
+1 1:Crashed second primary
+
+restartServer 0
+
+printChatLog 0
+0 0:HelloWorld
+1 1:Crashed second primary
+2 0:HelloWorld
+
+crashServer 2
+
+restartServer 2
+
+sendMessage 1 Kill and got back the primary
+
+printChatLog 0
+0 0:HelloWorld
+1 1:Crashed second primary
+2 0:HelloWorld
+
+printChatLog 0
+0 0:HelloWorld
+1 1:Crashed second primary
+2 0:HelloWorld
+
+sendMessage 1 Trying second time
+
+printChatLog 0
+0 0:HelloWorld
+1 1:Crashed second primary
+2 0:HelloWorld

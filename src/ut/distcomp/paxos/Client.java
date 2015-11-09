@@ -45,6 +45,7 @@ public class Client {
 	}
 	
 	public void CrashClient(){
+		nc.shutdown();
 		if(receiveThread != null){
 			receiveThread.stop();
 		}
@@ -159,7 +160,7 @@ public class Client {
 	}
 
 	private String formatCommand(int index, Command c) {
-		return index + " " + c.getClientId() + ":" + c.getInput();
+		return index + " " + c.getClientId() + ": " + c.getInput();
 	}
 
 	/**
@@ -175,8 +176,7 @@ public class Client {
 	}
 
 	/**
-	 * Chat log of this client received from the servers. TODO: Change it to
-	 * some different structure.
+	 * Chat log of this client received from the servers. 
 	 */
 	private SortedMap<Integer, Command> chatLog;
 	/**

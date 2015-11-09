@@ -24,7 +24,7 @@ public class Master {
 			}
 			String[] inputLine = line.split(" ");
 			int clientIndex, nodeIndex;
-			//System.out.println(inputLine[0]);
+			// System.out.println(inputLine[0]);
 			switch (inputLine[0]) {
 			case "start":
 				numNodes = Integer.parseInt(inputLine[1]);
@@ -91,11 +91,15 @@ public class Master {
 				break;
 			}
 		}
-		for (Client c : clients) {
-			c.CrashClient();
+		for (int i = 0; i < numClients; i++) {
+			if (clients[i] != null) {
+				clients[i].CrashClient();
+			}
 		}
-		for (Server s : servers) {
-			s.CrashServer();
+		for (int i = 0; i < numNodes; i++) {
+			if (servers[i] != null) {
+				servers[i].CrashServer();
+			}
 		}
 		System.exit(0);
 		return;
@@ -109,10 +113,6 @@ public class Master {
 	}
 
 	private static void allClear(int numServers, int numClients) {
-		/*
-		 * TODO* : Check if there is anything being revived, if so then wait.
-		 * Currently the call is blocking. So no additional code is required.
-		 */
 		List<Integer> aliveServers = getAliveServers(numServers);
 		// System.out.println("Alive Servers");
 		for (Integer integer : aliveServers) {
@@ -127,7 +127,6 @@ public class Master {
 			} catch (InterruptedException e) {
 			}
 		}
-
 	}
 
 	private static void waitForAllClientsToBeServiced(int numClients) {
@@ -137,7 +136,8 @@ public class Master {
 				// Do nothing while all clients have got decisions
 				// for all their commands.
 			}
-			// System.out.println("All commands for client " + i + " are done.");
+			// System.out.println("All commands for client " + i + " are
+			// done.");
 		}
 	}
 
@@ -161,7 +161,8 @@ public class Master {
 						&& servers[index].IsServerExecutingProtocol()) {
 					// Do nothing till the server is executing protocol.
 				}
-				// System.out.println("Alive server " + index + " has finished.");
+				// System.out.println("Alive server " + index + " has
+				// finished.");
 			}
 		} else {
 			// There is a minority. Cannot continue with protocol.
