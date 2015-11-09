@@ -93,6 +93,7 @@ public class Commander extends Thread {
 				msg = new Message(leaderId, acceptorId);
 				msg.setP2AContent(pValue, commanderId);
 				nc.sendMessageToServer(acceptorId, msg);
+				config.logger.info("Sending p2a message :"+msg.toString());
 				// Decrement the number of messages to be sent.
 				if (curValue != -1) {
 					numMsgsToSend.decrementAndGet();
@@ -109,6 +110,7 @@ public class Commander extends Thread {
 			msg = new Message(leaderId, replicaId);
 			msg.setDecisionContent(pValue.getsValue());
 			nc.sendMessageToServer(replicaId, msg);
+			config.logger.info("Sending decision message :"+msg.toString());
 		}
 	}
 

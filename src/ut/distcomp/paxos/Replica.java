@@ -161,12 +161,12 @@ public class Replica extends Thread {
 		proposals.add(proposal);
 		// Send proposal to all leaders.
 		// TODO: Just send to your leader.
-		for (int leaderId = 0; leaderId < config.numServers; leaderId++) {
-			Message msg = new Message(replicaId, leaderId);
-			msg.setProposeContent(s1, c);
-			config.logger.info("Sending Propose msg:" + msg.toString());
-			nc.sendMessageToServer(leaderId, msg);
-		}
+		// for (int leaderId = 0; leaderId < config.numServers; leaderId++) {
+		Message msg = new Message(replicaId, replicaId);
+		msg.setProposeContent(s1, c);
+		config.logger.info("Sending Propose msg:" + msg.toString());
+		nc.sendMessageToServer(replicaId, msg);
+		// }
 	}
 
 	private void perform(Command c) {

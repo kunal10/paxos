@@ -39,6 +39,7 @@ public class Heartbeat extends Thread {
 			// synchronized (currentPlId) {
 			config.logger.info("Detected death of " + failedProcess
 					+ " and current primary is " + currentPlId.getValue());
+			nc.setOutgoingToNull(failedProcess);
 			currentPrimary[failedProcess] = -1;
 			if (failedProcess == currentPlId.getValue()) {
 				setPrimary(getNextPrimary());
@@ -99,11 +100,12 @@ public class Heartbeat extends Thread {
 	}
 
 	private void sendHeartBeat() {
-		try {
-			for (int dest = 0; dest < config.numServers; dest++) {
-				if (dest == serverId) {
-					continue;
-				}
+
+		for (int dest = 0; dest < config.numServers; dest++) {
+			if (dest == serverId) {
+				continue;
+			}
+			try {
 				Message m = new Message(serverId, dest);
 				m.setHeartBeatContent(currentPrimary[serverId]);
 				config.logger.info("Sending heartbeat to " + dest + " at: "
@@ -111,12 +113,14 @@ public class Heartbeat extends Thread {
 				if (!nc.sendMessageToServer(dest, m)) {
 					config.logger.info("Failed to send HB to: " + dest);
 				}
+			} catch (Exception e) {
+				config.logger.severe(
+						"Error in sending " + "heartbeat : " + e.getMessage());
 			}
-		} catch (Exception e) {
-			config.logger.severe(
-					"Error in sending " + "heartbeat : " + e.getMessage());
 		}
 	}
+
+	
 
 	private void processHeartbeat() {
 		Message m = null;

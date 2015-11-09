@@ -130,12 +130,36 @@ public class Server {
 
 	public boolean IsServerAlive() {
 		boolean isAlive = false;
+		config.logger.info("Is server alive");
+		if (isThreadNull(heartbeatThread)) {
+			config.logger.info(serverId + " Heartbeat thread is null");
+		}
+		if (isThreadNull(replicaThread)) {
+			config.logger.info(serverId + " Replica thread is null");
+		}
+		if (isThreadNull(leaderThread)) {
+			config.logger.info(serverId + " Leader thread is null");
+		}
+		if (isThreadNull(acceptorThread)) {
+			config.logger.info(serverId + " Acceptor thread is null");
+		}
 		if (heartbeatThread != null && replicaThread != null
 				&& leaderThread != null && acceptorThread != null) {
+			config.logger.info("Is Alive values :H" + heartbeatThread.isAlive()
+					+ ":R:" + replicaThread.isAlive() + ":L:"
+					+ leaderThread.isAlive() + ":A:"
+					+ acceptorThread.isAlive());
 			isAlive = heartbeatThread.isAlive() && replicaThread.isAlive()
 					&& leaderThread.isAlive() && acceptorThread.isAlive();
 		}
 		return isAlive;
+	}
+
+	private boolean isThreadNull(Thread t) {
+		if (t == null) {
+			return true;
+		}
+		return false;
 	}
 
 	public boolean IsServerExecutingProtocol() {

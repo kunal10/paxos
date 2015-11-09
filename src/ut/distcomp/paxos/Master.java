@@ -29,9 +29,7 @@ public class Master {
 			case "start":
 				numNodes = Integer.parseInt(inputLine[1]);
 				numClients = Integer.parseInt(inputLine[2]);
-				initializeClients(numNodes, numClients);
-				initializeServers(numNodes, numClients);
-				startServers();
+				start(numNodes, numClients);
 				break;
 			case "sendMessage":
 				clientIndex = Integer.parseInt(inputLine[1]);
@@ -103,6 +101,18 @@ public class Master {
 		}
 		System.exit(0);
 		return;
+	}
+	
+	private static void start(int numNodes, int numClients){
+		initializeClients(numNodes, numClients);
+		initializeServers(numNodes, numClients);
+		startServers();
+		try {
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	private static void printChatlog(int clientIndex) {

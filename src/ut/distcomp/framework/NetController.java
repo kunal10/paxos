@@ -187,6 +187,10 @@ public class NetController {
 		return sendMsg(clientProcessId, msg);
 	}
 	
+	public void setOutgoingToNull(int i){
+		outSockets[i] = null;
+	}
+	
 	/**
 	 * Send a msg to another process.  This will establish a socket if one is not created yet.
 	 * Will fail if recipient has not set up their own NetController (and its associated serverSocket)
@@ -226,6 +230,8 @@ public class NetController {
 			config.logger.log(Level.FINE, String.format("Server %d: Socket to"
 					+ " %d error", config.procNum, process), e);
 			return false;
+		} catch (Exception e) {
+			config.logger.severe("Unknown Exception in net controller");
 		}
 		return true;
 	}
