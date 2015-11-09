@@ -238,9 +238,10 @@ public class Message implements Serializable {
 		result.append("\nDest: " + dest);
 		result.append("\nSrcType: " + srcType.name());
 		result.append("\nDestType: " + destType.name());
+		result.append("\nMessageType: " + msgType.name());
 		// Type specific content fields.
 		if (ballot != null) {
-			result.append("\nCommand: " + ballot.toString());
+			result.append("\nBallot: " + ballot.toString());
 		}
 		if (sValue != null) {
 			result.append("\nsValue: " + sValue.toString());

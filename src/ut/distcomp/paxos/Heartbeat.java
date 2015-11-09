@@ -98,7 +98,7 @@ public class Heartbeat extends Thread {
 
 	private void addTimerForServer(int i) {
 		try {
-			int delay = Config.HeartbeatConsumptionFrequency;
+			int delay = Config.HeartbeatTimeout;
 			TimerTask tti = new ElectNewLeaderOnTimeoutTask(i);
 			exisitingTimers.put(i, tti);
 			timer.schedule(tti, delay);
@@ -117,30 +117,26 @@ public class Heartbeat extends Thread {
 
 		@Override
 		public void run() {
-			config.logger.info("Detected death of " + failedProcess + " and "
-					+ "current primary is " + currentPlId);
-			primaryLeaderView[failedProcess] = -1;
-			if (failedProcess == currentPlId.get()) {
-				config.logger.info(
-						"Detected death of current leader " + currentPlId);
-				primaryLeaderView[serverId] = (currentPlId.get() + 1)
-						% config.numServers;
-				config.logger.info(
-						"Setting new leader to " + primaryLeaderView[serverId]);
-				int newLeader = primaryLeaderView[serverId];
-				// int newLeader = waitForMajorityToElectNewLeader();
-				// config.logger.info("Majority elected leader as " + newLeader);
-				// primaryLeaderView[serverId] = newLeader;
-				currentPlId.set(newLeader);
-				if (newLeader == serverId) {
-					if (becomePrimary.offer(true)) {
-						config.logger.info("Elected as primary");
-					} else {
-						config.logger
-								.info("Wasnt able to communicate to leader");
+			synchronized (currentPlId) {
+				config.logger.info("Detected death of " + failedProcess
+						+ " and current primary is " + currentPlId);
+				primaryLeaderView[failedProcess] = -1;
+				if (failedProcess == currentPlId.get()) {
+					primaryLeaderView[serverId] = (currentPlId.get() + 1)
+							% config.numServers;
+					config.logger.info("Setting new leader to "
+							+ primaryLeaderView[serverId]);
+					int newLeader = primaryLeaderView[serverId];
+					currentPlId.set(newLeader);
+					if (newLeader == serverId) {
+						if (becomePrimary.offer(true)) {
+							config.logger.info("Elected as primary");
+						} else {
+							config.logger.info(
+									"Wasnt able to communicate to leader");
+						}
 					}
-				}
-			} else {
+				} 
 				// Add a new timer even for a failed process.
 				addTimerForServer(failedProcess);
 			}
@@ -159,51 +155,12 @@ public class Heartbeat extends Thread {
 		}
 	}
 
-	// Wait for a majority for any number other than -1 or the current
-	// primary
-	private int waitForMajorityToElectNewLeader() {
-		boolean leaderSet = false;
-		while (!leaderSet) {
-			int possibleLeader = checkMajority();
-			if (possibleLeader >= 0 && possibleLeader != currentPlId.get()) {
-				leaderSet = true;
-				return possibleLeader;
-			}
-		}
-		return -1;
-	}
-
-	private int checkMajority() {
-		int count = 0, i, majorityElement = -1;
-		for (i = 0; i < config.numServers; i++) {
-			if (count == 0)
-				majorityElement = primaryLeaderView[i];
-			if (primaryLeaderView[i] == majorityElement)
-				count++;
-			else
-				count--;
-		}
-		count = 0;
-		for (i = 0; i < config.numServers; i++)
-			if (primaryLeaderView[i] == majorityElement) {
-				count++;
-			}
-		if (count > config.numServers / 2) {
-			return majorityElement;
-		}
-		return -1;
-	}
-
 	@Override
 	public void run() {
-		// Frequency at which heart beats are sent. Should not be too small
-		// otherwise heart beat queue will start filling faster than the rate at
-		// which it is consumed.
-		long freq = 1000;
 		// Set a new timer which executed the SendHeartbeatTask for the given
 		// frequency.
 		tt = new SendHeartBeatTask();
-		timer2.schedule(tt, 0, freq);
+		timer2.schedule(tt, 0, Config.HeartbeatFrequency);
 		// Initialize all the timers to track heartbeat of other processes.
 		for (int i = 0; i < config.numServers; i++) {
 			if (i != serverId) {
@@ -233,8 +190,13 @@ public class Heartbeat extends Thread {
 		// config.logger.info(pId + " Adding timer for "+m.getSrc());
 		addTimerForServer((m.getSrc()));
 		primaryLeaderView[m.getSrc()] = m.getPrimary();
-		if (m.getPrimary() == serverId) {
-			becomePrimary.offer(true);
+		synchronized (currentPlId) {
+			if (currentPlId.get() != serverId && m.getPrimary() == serverId) {
+				config.logger
+						.info("Becoming primary because of: " + m.toString());
+				becomePrimary.offer(true);
+				currentPlId.set(serverId);
+			}
 		}
 	}
 

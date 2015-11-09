@@ -57,7 +57,7 @@ public class Leader extends Thread {
 		try {
 			config.logger.info("Waiting to be elected as primary");
 			becomePrimary.take();
-			config.logger.info("Elected as primary");
+			config.logger.info("Leader Elected as primary");
 			spawnScout();
 		} catch (Exception e) {
 			config.logger.info(e.getMessage());
