@@ -47,7 +47,7 @@ public class Server {
 		killThread(acceptorThread);
 		acceptorThread = null;
 		try {
-			Thread.sleep(Config.HeartbeatFrequency);
+			Thread.sleep(1000);
 		} catch (InterruptedException e) {
 		}
 	}

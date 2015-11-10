@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -108,6 +109,7 @@ public class Leader extends Thread {
 				Ballot b = m.getBallot();
 				if (b.compareTo(ballot) == 1) {
 					active = false;
+					randomBackoff();
 					ballot.setValue(b.getValue() + 1);
 					spawnScout();
 				}
@@ -225,6 +227,17 @@ public class Leader extends Thread {
 					s.stop();
 				}
 			}
+		}
+	}
+
+	private void randomBackoff() {
+		Random r = new Random();
+		// Sleep randomly for 0 - 100 secs.
+		try {
+			Thread.sleep(r.nextInt(100));
+		} catch (InterruptedException e) {
+			config.logger.info("Leader Thread interrupted when backing off: "
+					+ e.getMessage());
 		}
 	}
 
