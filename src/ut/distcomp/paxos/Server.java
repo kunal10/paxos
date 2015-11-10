@@ -85,6 +85,7 @@ public class Server {
 		try {
 			Thread.sleep(Config.RevivalDelay);
 		} catch (InterruptedException e) {
+			return;
 		}
 		// Retrieve state for replica.
 		replicaThread.recover();
@@ -92,14 +93,6 @@ public class Server {
 		acceptorThread.recover();
 		// Retrieve a vote for the heartbeat thread.
 		heartbeatThread.recover();
-		// TODO: Clear Queues ?
-		/*
-		 * TODO*: To make this asynchronous : All the threads should have a
-		 * variable called recovery to be set. If set they call the recover
-		 * function on start of the thread. Also there is a state maintained in
-		 * the server IsRecovering which should be set to false once all threads
-		 * have recovered. This state should be used by allclear in blocking.
-		 */
 	}
 
 	private void initializeServerThreads() {
@@ -121,6 +114,7 @@ public class Server {
 			Thread.sleep(100);
 		} catch (InterruptedException e) {
 			config.logger.severe(e.getMessage());
+			return;
 		}
 		if (serverId == currentPrimaryLeader.getValue()) {
 			if (becomePrimary.offer(true)) {

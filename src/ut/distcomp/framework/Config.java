@@ -7,16 +7,13 @@
 
 package ut.distcomp.framework;
 
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.util.Properties;
 import java.util.logging.FileHandler;
 import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
 
 public class Config {
 
@@ -98,8 +95,6 @@ public class Config {
 	public static final int HeartbeatFrequency = 1000;
 	
 	public static final int RevivalDelay = HeartbeatTimeout * 2;
-	
-	public static final int QueuePollTimeout = 1000;
 }
 
 class MyFormatter extends Formatter {

@@ -1,6 +1,5 @@
 package ut.distcomp.paxos;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +13,6 @@ public class Master {
 	static Client[] clients = null;
 	static boolean masterLogging = false;
 
-	// TODO: Remove sysouts : Set master Logging to false while submitting
 	public static void main(String[] args) {
 		Scanner scan = new Scanner(System.in);
 		int numNodes = 0, numClients = 0;
@@ -26,7 +24,7 @@ public class Master {
 			}
 			String[] inputLine = line.split(" ");
 			int clientIndex, nodeIndex;
-			if(masterLogging){
+			if (masterLogging) {
 				System.out.println(inputLine[0]);
 			}
 			switch (inputLine[0]) {
@@ -100,6 +98,7 @@ public class Master {
 				servers[i].CrashServer();
 			}
 		}
+		scan.close();
 		System.exit(0);
 		return;
 	}
@@ -116,6 +115,7 @@ public class Master {
 		try {
 			Thread.sleep(1000);
 		} catch (InterruptedException e) {
+			return;
 		}
 		servers[nodeIndex] = initializeSingleServer(nodeIndex, numNodes,
 				numClients);
@@ -181,8 +181,9 @@ public class Master {
 						&& servers[index].IsServerExecutingProtocol()) {
 					// Do nothing till the server is executing protocol.
 				}
-				if(masterLogging){
-					System.out.println("Alive server " + index + " has finished.");
+				if (masterLogging) {
+					System.out.println(
+							"Alive server " + index + " has finished.");
 				}
 			}
 		} else {
@@ -206,7 +207,7 @@ public class Master {
 				clients[i] = new Client(i, new Config(i + numNodes, numNodes,
 						numClients, "LogClient" + i + ".txt"));
 			} catch (IOException e) {
-
+				return;
 			}
 		}
 	}
