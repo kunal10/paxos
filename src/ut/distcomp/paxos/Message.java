@@ -60,7 +60,7 @@ public class Message implements Serializable {
 		command = new Command(c);
 	}
 
-	public void setResponseContent(SValue s, String response) {
+	public void setResponseContent(SValue s) {
 		srcType = NodeType.REPLICA;
 		destType = NodeType.CLIENT;
 		msgType = MessageType.RESPONSE;

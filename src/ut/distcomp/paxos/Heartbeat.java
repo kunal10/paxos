@@ -39,7 +39,7 @@ public class Heartbeat extends Thread {
 			// synchronized (currentPlId) {
 			config.logger.info("Detected death of " + failedProcess
 					+ " and current primary is " + currentPlId.getValue());
-			nc.setOutgoingToNull(failedProcess);
+			nc.shutDownOutgoingSocket(failedProcess);
 			currentPrimary[failedProcess] = -1;
 			if (failedProcess == currentPlId.getValue()) {
 				setPrimary(getNextPrimary());
@@ -61,7 +61,7 @@ public class Heartbeat extends Thread {
 			try {
 				sendHeartBeat();
 			} catch (Exception e) {
-				config.logger.severe(e.getMessage());
+//				config.logger.severe(e.getMessage());
 			}
 		}
 	}
@@ -108,14 +108,14 @@ public class Heartbeat extends Thread {
 			try {
 				Message m = new Message(serverId, dest);
 				m.setHeartBeatContent(currentPrimary[serverId]);
-				config.logger.info("Sending heartbeat to " + dest + " at: "
-						+ System.currentTimeMillis());
+//				config.logger.info("Sending heartbeat to " + dest + " at: "
+//						+ System.currentTimeMillis());
 				if (!nc.sendMessageToServer(dest, m)) {
-					config.logger.info("Failed to send HB to: " + dest);
+//					config.logger.info("Failed to send HB to: " + dest);
 				}
 			} catch (Exception e) {
-				config.logger.severe(
-						"Error in sending " + "heartbeat : " + e.getMessage());
+//				config.logger.severe(
+//						"Error in sending " + "heartbeat : " + e.getMessage());
 			}
 		}
 	}
@@ -127,23 +127,22 @@ public class Heartbeat extends Thread {
 		try {
 			m = heartbeatQueue.take();
 		} catch (Exception e) {
-			config.logger
-					.severe("Error in heartbeat queue wait :" + e.getMessage());
+//			config.logger
+//					.severe("Error in heartbeat queue wait :" + e.getMessage());
 			return;
 		}
 		int src = m.getSrc();
 		// Disable the timer if a timer is running for that process.
 		if (exisitingTimers.containsKey(src)) {
 			exisitingTimers.get(src).cancel();
-			config.logger.info("Processed heart beat at: "
-					+ System.currentTimeMillis() + m.toString());
+//			config.logger.info("Processed heart beat at: "
+//					+ System.currentTimeMillis() + m.toString());
 		}
 		currentPrimary[src] = m.getPrimary();
 		// synchronized (currentPlId) {
-		// if (currentPlId.getValue() != serverId && m.getPrimary() == serverId)
-		// {
-		// setPrimary(serverId);
-		// }
+		if (currentPlId.getValue() != serverId && m.getPrimary() == serverId) {
+			setPrimary(serverId);
+		}
 		// }
 		addTimerForServer(src);
 	}
@@ -169,14 +168,14 @@ public class Heartbeat extends Thread {
 	}
 
 	private void addTimerForServer(int i) {
-		config.logger.info(
-				"Adding timer for: " + i + " at" + System.currentTimeMillis());
+//		config.logger.info(
+//				"Adding timer for: " + i + " at" + System.currentTimeMillis());
 		try {
 			TimerTask electLeader = new ElectPrimaryLeader(i);
 			deathDetector.schedule(electLeader, Config.HeartbeatTimeout);
 			exisitingTimers.put(i, electLeader);
 		} catch (Exception e) {
-			config.logger.severe(e.getMessage());
+//			config.logger.severe(e.getMessage());
 		}
 	}
 
@@ -205,10 +204,10 @@ public class Heartbeat extends Thread {
 		currentPlId.setValue(primary);
 		if (primary == serverId) {
 			if (becomePrimary.offer(true)) {
-				config.logger.info("Elected as primary");
+//				config.logger.info("Elected as primary");
 			} else {
-				config.logger.info("Leader ignored offer to become primary.\n"
-						+ "It must already have become primary");
+//				config.logger.info("Leader ignored offer to become primary.\n"
+//						+ "It must already have become primary");
 			}
 		}
 	}

@@ -32,7 +32,13 @@ public class Server {
 	/**
 	 * Kill all threads and exit.
 	 */
-	public void CrashServer() {
+	public void crashServer() {
+		stopServer();
+		shutDown();
+	}
+	
+	// Should be followed by shutdown for clean crash.
+	public void stopServer() {
 		nc.shutdown();
 		heartbeatThread.shutDown();
 		killThread(heartbeatThread);
@@ -46,6 +52,13 @@ public class Server {
 		replicaThread = null;
 		killThread(acceptorThread);
 		acceptorThread = null;
+	}
+	
+	public void shutDown() {
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+		}
 	}
 
 	private void killThread(Thread t) {
@@ -81,6 +94,7 @@ public class Server {
 		try {
 			Thread.sleep(Config.RevivalDelay);
 		} catch (InterruptedException e) {
+			return;
 		}
 		// Retrieve state for replica.
 		replicaThread.recover();
@@ -88,14 +102,6 @@ public class Server {
 		acceptorThread.recover();
 		// Retrieve a vote for the heartbeat thread.
 		heartbeatThread.recover();
-		// TODO: Clear Queues ?
-		/*
-		 * TODO*: To make this asynchronous : All the threads should have a
-		 * variable called recovery to be set. If set they call the recover
-		 * function on start of the thread. Also there is a state maintained in
-		 * the server IsRecovering which should be set to false once all threads
-		 * have recovered. This state should be used by allclear in blocking.
-		 */
 	}
 
 	private void initializeServerThreads() {
@@ -117,6 +123,7 @@ public class Server {
 			Thread.sleep(100);
 		} catch (InterruptedException e) {
 			config.logger.severe(e.getMessage());
+			return;
 		}
 		if (serverId == currentPrimaryLeader.getValue()) {
 			if (becomePrimary.offer(true)) {
@@ -188,7 +195,7 @@ public class Server {
 							config.logger.info(e.getMessage());
 						}
 					}
-					CrashServer();
+					crashServer();
 				}
 			};
 			t.start();

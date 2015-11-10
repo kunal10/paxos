@@ -184,7 +184,7 @@ def ExecuteCommandWithTee(cmdStr, inputLines, outputFile):
     def alarm_handler(signum, frame):
         raise Alarm
     signal(SIGALRM, alarm_handler)
-    alarm(60)
+    alarm(200)
     try:
         print 'Command Str : '
         print cmdStr
@@ -194,8 +194,8 @@ def ExecuteCommandWithTee(cmdStr, inputLines, outputFile):
         #print 'Input to process'
         #print input2
         out, err = proc.communicate(input2)
-        #print 'Raw Output of a process'
-        #print out
+        print 'Raw Output of a process'
+        print out
         alarm(0)
         with open(outputFile, 'w') as outfile:
             print out.rstrip()

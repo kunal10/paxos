@@ -16,11 +16,18 @@ local.properties
 # Text files.
 *.txt 
 
+# Generated files
+*.ans
+
 # Configs
 *SimulationConfig*
 
 # Eclipse Core
 .project
+*.class
+
+# Python Project 
+*.pydevproject
 
 # External tool builders
 .externalToolBuilders/

@@ -1,6 +1,5 @@
 package ut.distcomp.paxos;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +13,6 @@ public class Master {
 	static Client[] clients = null;
 	static boolean masterLogging = false;
 
-	// TODO: Remove sysouts : Set master Logging to false while submitting
 	public static void main(String[] args) {
 		Scanner scan = new Scanner(System.in);
 		int numNodes = 0, numClients = 0;
@@ -26,9 +24,10 @@ public class Master {
 			}
 			String[] inputLine = line.split(" ");
 			int clientIndex, nodeIndex;
-			if(masterLogging){
+			if (masterLogging) {
 				System.out.println(inputLine[0]);
 			}
+			try {
 			switch (inputLine[0]) {
 			case "start":
 				numNodes = Integer.parseInt(inputLine[1]);
@@ -68,7 +67,7 @@ public class Master {
 				break;
 			case "crashServer":
 				nodeIndex = Integer.parseInt(inputLine[1]);
-				servers[nodeIndex].CrashServer();
+				servers[nodeIndex].crashServer();
 				/*
 				 * Immediately crash the server specified by nodeIndex
 				 */
@@ -89,17 +88,10 @@ public class Master {
 				}
 				break;
 			}
+			} catch (Exception e) {}
 		}
-		for (int i = 0; i < numClients; i++) {
-			if (clients[i] != null) {
-				clients[i].CrashClient();
-			}
-		}
-		for (int i = 0; i < numNodes; i++) {
-			if (servers[i] != null) {
-				servers[i].CrashServer();
-			}
-		}
+		shutDownProcesses(numNodes, numClients);
+		scan.close();
 		System.exit(0);
 		return;
 	}
@@ -114,8 +106,9 @@ public class Master {
 			int numClients) {
 		servers[nodeIndex] = null;
 		try {
-			Thread.sleep(1000);
+			Thread.sleep(2000);
 		} catch (InterruptedException e) {
+			return;
 		}
 		servers[nodeIndex] = initializeSingleServer(nodeIndex, numNodes,
 				numClients);
@@ -143,6 +136,23 @@ public class Master {
 		}
 		try {
 			Thread.sleep(Config.RevivalDelay + 2 * Config.HeartbeatFrequency);
+		} catch (InterruptedException e) {
+		}
+	}
+	
+	private static void shutDownProcesses(int numServers, int numClients) {
+		for (int i = 0; i < numClients; i++) {
+			if (clients[i] != null) {
+				clients[i].CrashClient();
+			}
+		}
+		for (int i = 0; i < numServers; i++) {
+			if (servers[i] != null) {
+				servers[i].stopServer();
+			}
+		}
+		try {
+			Thread.sleep(2000);
 		} catch (InterruptedException e) {
 		}
 	}
@@ -181,8 +191,9 @@ public class Master {
 						&& servers[index].IsServerExecutingProtocol()) {
 					// Do nothing till the server is executing protocol.
 				}
-				if(masterLogging){
-					System.out.println("Alive server " + index + " has finished.");
+				if (masterLogging) {
+					System.out.println(
+							"Alive server " + index + " has finished.");
 				}
 			}
 		} else {
@@ -206,7 +217,7 @@ public class Master {
 				clients[i] = new Client(i, new Config(i + numNodes, numNodes,
 						numClients, "LogClient" + i + ".txt"));
 			} catch (IOException e) {
-
+				return;
 			}
 		}
 	}
