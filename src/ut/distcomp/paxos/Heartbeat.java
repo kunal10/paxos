@@ -39,7 +39,7 @@ public class Heartbeat extends Thread {
 			// synchronized (currentPlId) {
 			config.logger.info("Detected death of " + failedProcess
 					+ " and current primary is " + currentPlId.getValue());
-			nc.setOutgoingToNull(failedProcess);
+			nc.shutDownOutgoingSocket(failedProcess);
 			currentPrimary[failedProcess] = -1;
 			if (failedProcess == currentPlId.getValue()) {
 				setPrimary(getNextPrimary());

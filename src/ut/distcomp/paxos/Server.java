@@ -46,6 +46,10 @@ public class Server {
 		replicaThread = null;
 		killThread(acceptorThread);
 		acceptorThread = null;
+		try {
+			Thread.sleep(Config.HeartbeatFrequency);
+		} catch (InterruptedException e) {
+		}
 	}
 
 	private void killThread(Thread t) {

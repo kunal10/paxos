@@ -161,7 +161,7 @@ public class NetController {
 	 * @param msg
 	 * @return
 	 */
-	public boolean sendMessageToServer(int serverId, Message msg) {
+	public synchronized boolean sendMessageToServer(int serverId, Message msg) {
 		return sendMsg(serverId, msg);
 	}
 
@@ -172,7 +172,7 @@ public class NetController {
 	 * @param msg
 	 * @return
 	 */
-	public boolean sendMessageToClient(int clientId, Message msg) {
+	public synchronized boolean sendMessageToClient(int clientId, Message msg) {
 		config.logger.info("Sending message to a client : " + clientId);
 		int clientProcessId = clientId + numOfServers;
 		config.logger.info("using client process ID : " + clientProcessId);
@@ -180,8 +180,11 @@ public class NetController {
 		return sendMsg(clientProcessId, msg);
 	}
 
-	public void setOutgoingToNull(int i) {
-		outSockets[i] = null;
+	public void shutDownOutgoingSocket(int process) {
+		if (outSockets[process] != null) {
+			outSockets[process].cleanShutdown();
+			outSockets[process] = null;
+		}
 	}
 
 	/**
@@ -202,18 +205,14 @@ public class NetController {
 			if (outSockets[process] == null)
 				initOutgoingConn(process);
 			outSockets[process].sendMsg(msg);
-		} catch (IOException e) {
+		} catch (Exception e) {
 			if (outSockets[process] != null) {
-				outSockets[process].cleanShutdown();
-				outSockets[process] = null;
+				shutDownOutgoingSocket(process);
 				try {
 					initOutgoingConn(process);
 					outSockets[process].sendMsg(msg);
-				} catch (IOException e1) {
-					if (outSockets[process] != null) {
-						outSockets[process].cleanShutdown();
-						outSockets[process] = null;
-					}
+				} catch (Exception e1) {
+					shutDownOutgoingSocket(process);
 					config.logger.info(
 							String.format("Server %d: Msg to %d " + "failed.",
 									config.procNum, process));
@@ -232,8 +231,6 @@ public class NetController {
 							config.procNum, process),
 					e);
 			return false;
-		} catch (Exception e) {
-			config.logger.severe("Unknownw Exception in net controller");
 		}
 		return true;
 	}

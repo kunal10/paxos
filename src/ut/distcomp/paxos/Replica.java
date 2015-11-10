@@ -84,9 +84,6 @@ public class Replica extends Thread {
 				propose(sValue.getCommand());
 			}
 			config.logger.info("Finished recovery for replica");
-		} else {
-			config.logger.info(
-					"Unsuccessful recovery for replica. Proposals is null on recovery");
 		}
 	}
 
@@ -154,9 +151,9 @@ public class Replica extends Thread {
 							propose(p2c);
 						}
 					}
-					// Perform command decided for current slot.
-					perform(p1c);
-					// Find decision for current slot.
+					sendDecision(p1);
+					// Increment the slot and find decision for it.
+					slotNum++;
 					p1 = getDecisionForSlot(slotNum);
 				}
 				break;
@@ -164,6 +161,16 @@ public class Replica extends Thread {
 				config.logger.severe("Received Unexpected Msg" + m.toString());
 				break;
 			}
+		}
+	}
+	
+	private void sendDecision(SValue decision) {
+		// Broadcast the decision to all clients.
+		config.logger.info("Broadcasting Response: " + decision.toString());
+		for (int i = 0; i < config.numClients; i++) {
+			Message msg = new Message(replicaId, i);
+			msg.setResponseContent(decision);
+			nc.sendMessageToClient(i, msg);
 		}
 	}
 
@@ -183,36 +190,24 @@ public class Replica extends Thread {
 		nc.sendMessageToServer(replicaId, msg);
 	}
 
-	private void perform(Command c) {
-		int s = getEarliestDecidedSlot(c);
-		// If c has already been performed then increment the slotNum and exit.
-		if (s >= 0 && s < slotNum) {
-			slotNum++;
-			return;
-		}
-		slotNum++;
-		// Broadcast the message to all clients
-		for (int i = 0; i < config.numClients; i++) {
-			Message msg = new Message(replicaId, i);
-			msg.setResponseContent(new SValue(s, c), c.getInput());
-			nc.sendMessageToClient(i, msg);
-		}
-
-	}
-
 	// Returns smallest slot number for which given command was decided.
 	// Returns -1 it the command has not been decided.
+	// NOTE : The return value can be higher than current slot number of this 
+	// replica
 	private int getEarliestDecidedSlot(Command c) {
 		if (c == null) {
 			return -1;
 		}
+		int minSlot = -1;
 		for (SValue decision : decisions) {
 			Command decided = decision.getCommand();
 			if (decided.equals(c)) {
-				return decision.getSlot();
+				if (minSlot == -1 || minSlot > decision.getSlot()) {
+					minSlot = decision.getSlot();
+				}
 			}
 		}
-		return -1;
+		return minSlot;
 	}
 
 	// Returns SValue for slot if its decided, null otherwise.
