@@ -48,10 +48,6 @@ public class Config {
 		}
 	}
 
-	private int loadInt(Properties prop, String s) {
-		return Integer.parseInt(prop.getProperty(s.trim()));
-	}
-
 	/**
 	 * Default constructor for those who want to populate config file manually
 	 */
@@ -97,9 +93,9 @@ public class Config {
 	 */
 	public int numServers;
 
-	public static final int HeartbeatTimeout = 600;
+	public static final int HeartbeatTimeout = 1200;
 	
-	public static final int HeartbeatFrequency = 500;
+	public static final int HeartbeatFrequency = 1000;
 	
 	public static final int RevivalDelay = HeartbeatTimeout * 2;
 	
