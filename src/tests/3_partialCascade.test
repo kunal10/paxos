@@ -22,4 +22,3 @@ sendMessage 0 3_is_dead
 allClear
 printChatLog 0
 printChatLog 1
-exit

@@ -1,0 +1,10 @@
+start 5 2
+crashServer 1
+allClear
+timeBombLeader 2
+sendMessage 0 Will destroy all acceptors who received this
+allClear
+printChatLog 0
+printChatLog 1
+
+

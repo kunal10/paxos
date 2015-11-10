@@ -10,4 +10,3 @@ timeBombLeader 2
 sendMessage 0 Leader timebomb 3
 printChatLog 0
 printChatLog 1
-exit

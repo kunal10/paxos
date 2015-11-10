@@ -12,4 +12,3 @@ allClear
 printChatLog 0
 printChatLog 1
 printChatLog 2
-exit

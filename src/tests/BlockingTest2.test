@@ -14,4 +14,3 @@ restartServer 1
 allClear
 printChatLog 0
 printChatLog 1
-exit
