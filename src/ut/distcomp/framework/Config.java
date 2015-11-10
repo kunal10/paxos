@@ -11,6 +11,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.Date;
 import java.util.Properties;
 import java.util.logging.FileHandler;
 import java.util.logging.Formatter;
@@ -19,6 +20,8 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
 public class Config {
+
+	
 
 	/**
 	 * Loads config from a file. Optionally puts in 'procNum' if in file. See
@@ -104,6 +107,8 @@ public class Config {
 	public static final int RevivalDelay = HeartbeatTimeout * 2;
 	
 	public static final int QueuePollTimeout = 1000;
+	
+	public static final int ReproposeTimeout = 30000;
 }
 
 class MyFormatter extends Formatter {

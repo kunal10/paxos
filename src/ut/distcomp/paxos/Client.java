@@ -2,10 +2,13 @@ package ut.distcomp.paxos;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.TreeMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -35,6 +38,8 @@ public class Client {
 		this.nc = new NetController(config, numOfServers, clientQueue);
 		this.outstandingRequests = Collections.synchronizedSet(new HashSet<>());
 		this.receiveThread = null;
+		this.timer = new Timer();
+		this.reproposeTimers = new HashMap<>();
 		startReceiveThread();
 	}
 
@@ -63,10 +68,22 @@ public class Client {
 	public void sendMessageToChatroom(String m) {
 		int currentCommandId = getNextUniqueCommandNumber();
 		outstandingRequests.add(currentCommandId);
+		Command c = new Command(clientId, currentCommandId,
+				CommandType.SEND_MSG, m);
+		broadcastCommand(c);
+		registerReproposeTimer(c);
+	}
+
+	private void registerReproposeTimer(Command c) {
+		ReproposeCommand rc = new ReproposeCommand(c);
+		reproposeTimers.put(c.getCommandId(), rc);
+		timer.schedule(rc, Config.ReproposeTimeout);
+	}
+
+	public void broadcastCommand(Command c) {
 		for (int i = 0; i < numOfServers; i++) {
 			Message msg = new Message(clientId, i);
-			msg.setRequestContent(new Command(clientId, currentCommandId,
-					CommandType.SEND_MSG, m));
+			msg.setRequestContent(c);
 			if (nc.sendMessageToServer(i, msg)) {
 				config.logger.info("Succesfully sent to " + i
 						+ "\nMessage Sent : " + "\n" + msg.toString());
@@ -74,6 +91,21 @@ public class Client {
 				config.logger.info("Unsuccessful send to " + i
 						+ "\nMessage Sent : " + "\n" + msg.toString());
 			}
+		}
+	}
+
+	class ReproposeCommand extends TimerTask {
+		Command command;
+
+		public ReproposeCommand(Command c) {
+			this.command = c;
+		}
+
+		@Override
+		public void run() {
+			config.logger
+					.info("Client reproposing command " + command.toString());
+			broadcastCommand(command);
 		}
 	}
 
@@ -159,6 +191,11 @@ public class Client {
 				outstandingRequests.remove(Integer.valueOf(cId));
 				config.logger.info("\nRemoved " + cId);
 			}
+			if(reproposeTimers.containsKey(cId)){
+				// Cancel the timer for this command
+				reproposeTimers.get(cId).cancel();
+				config.logger.info("\nRemoved Timer :" + cId);
+			}
 		}
 		printOutstandingRequests();
 	}
@@ -233,6 +270,12 @@ public class Client {
 	 */
 	private Set<Integer> outstandingRequests;
 
+	/**
+	 * 
+	 */
+	private final HashMap<Integer, ReproposeCommand> reproposeTimers;
+
+	private Timer timer;
 	/**
 	 * Reference to the receive thread
 	 */
