@@ -127,10 +127,10 @@ public class Master {
 			waitForAllClientsToBeServiced(numClients);
 		}
 		// TODO(klad): Check this ?
-//		try {
-//			Thread.sleep(Config.RevivalDelay + 2 * Config.HeartbeatFrequency);
-//		} catch (InterruptedException e) {
-//		}
+		try {
+			Thread.sleep(Config.RevivalDelay + 2 * Config.HeartbeatFrequency);
+		} catch (InterruptedException e) {
+		}
 	}
 
 	private static void waitForAllClientsToBeServiced(int numClients) {
