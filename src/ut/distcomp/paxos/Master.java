@@ -12,7 +12,9 @@ public class Master {
 
 	static Server[] servers = null;
 	static Client[] clients = null;
-	// TODO: Remove sysouts
+	static boolean masterLogging = false;
+
+	// TODO: Remove sysouts : Set master Logging to false while submitting
 	public static void main(String[] args) {
 		Scanner scan = new Scanner(System.in);
 		int numNodes = 0, numClients = 0;
@@ -24,7 +26,9 @@ public class Master {
 			}
 			String[] inputLine = line.split(" ");
 			int clientIndex, nodeIndex;
-			System.out.println(inputLine[0]);
+			if(masterLogging){
+				System.out.println(inputLine[0]);
+			}
 			switch (inputLine[0]) {
 			case "start":
 				numNodes = Integer.parseInt(inputLine[1]);
@@ -71,10 +75,7 @@ public class Master {
 				break;
 			case "restartServer":
 				nodeIndex = Integer.parseInt(inputLine[1]);
-				servers[nodeIndex] = null;
-				servers[nodeIndex] = initializeSingleServer(nodeIndex, numNodes,
-						numClients);
-				servers[nodeIndex].RestartServer();
+				restartServer(nodeIndex, numNodes, numClients);
 				/*
 				 * Restart the server specified by nodeIndex
 				 */
@@ -102,11 +103,23 @@ public class Master {
 		System.exit(0);
 		return;
 	}
-	
-	private static void start(int numNodes, int numClients){
+
+	private static void start(int numNodes, int numClients) {
 		initializeClients(numNodes, numClients);
 		initializeServers(numNodes, numClients);
 		startServers();
+	}
+
+	private static void restartServer(int nodeIndex, int numNodes,
+			int numClients) {
+		servers[nodeIndex] = null;
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+		}
+		servers[nodeIndex] = initializeSingleServer(nodeIndex, numNodes,
+				numClients);
+		servers[nodeIndex].RestartServer();
 	}
 
 	private static void printChatlog(int clientIndex) {
@@ -118,15 +131,16 @@ public class Master {
 
 	private static void allClear(int numServers, int numClients) {
 		List<Integer> aliveServers = getAliveServers(numServers);
-		System.out.println("\n\nAlive Servers");
-		for (Integer integer : aliveServers) {
-			System.out.println(integer);
+		if (masterLogging) {
+			System.out.println("\n\nAlive Servers");
+			for (Integer integer : aliveServers) {
+				System.out.println(integer);
+			}
 		}
 		if (aliveServers.size() > (numServers / 2)) {
 			waitForServersToFinishProtocol(aliveServers, numServers);
 			waitForAllClientsToBeServiced(numClients);
 		}
-		// TODO(klad): Check this ?
 		try {
 			Thread.sleep(Config.RevivalDelay + 2 * Config.HeartbeatFrequency);
 		} catch (InterruptedException e) {
@@ -140,7 +154,10 @@ public class Master {
 				// Do nothing while all clients have got decisions
 				// for all their commands.
 			}
-			 System.out.println("All commands for client " + i + " aredone.");
+			if (masterLogging) {
+				System.out
+						.println("All commands for client " + i + " aredone.");
+			}
 		}
 	}
 
@@ -164,7 +181,9 @@ public class Master {
 						&& servers[index].IsServerExecutingProtocol()) {
 					// Do nothing till the server is executing protocol.
 				}
-				 System.out.println("Alive server " + index + " has finished.");
+				if(masterLogging){
+					System.out.println("Alive server " + index + " has finished.");
+				}
 			}
 		} else {
 			// There is a minority. Cannot continue with protocol.

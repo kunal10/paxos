@@ -1,5 +1,7 @@
 start 5 2
 sendMessage 0 all_alive
+allClear
+printChatLog 0
 crashServer 1
 sendMessage 1 1 is Dead
 crashServer 2
@@ -7,9 +9,7 @@ sendMessage 0 2 is Dead
 allClear
 printChatLog 0
 timeBombLeader 2
-sendMessage 0 BombingTheLeader
-printChatLog 0
-printChatLog 1
+sendMessage 1 BombingTheLeader
 restartServer 1
 allClear
 printChatLog 0
