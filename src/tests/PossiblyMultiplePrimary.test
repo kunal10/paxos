@@ -1,0 +1,17 @@
+start 5 2
+sendMessage 0 all_alive
+allClear
+printChatLog 0
+crashServer 1
+crashServer 0
+restartServer 1
+allClear
+sendMessage 0 1 recovered
+allClear
+printChatLog 0
+timeBombLeader 2
+sendMessage 1 BombingTheLeader
+allClear
+printChatLog 0
+printChatLog 1
+exit

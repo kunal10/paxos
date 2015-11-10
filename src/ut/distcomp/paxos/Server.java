@@ -32,7 +32,13 @@ public class Server {
 	/**
 	 * Kill all threads and exit.
 	 */
-	public void CrashServer() {
+	public void crashServer() {
+		stopServer();
+		shutDown();
+	}
+	
+	// Should be followed by shutdown for clean crash.
+	public void stopServer() {
 		nc.shutdown();
 		heartbeatThread.shutDown();
 		killThread(heartbeatThread);
@@ -46,6 +52,9 @@ public class Server {
 		replicaThread = null;
 		killThread(acceptorThread);
 		acceptorThread = null;
+	}
+	
+	public void shutDown() {
 		try {
 			Thread.sleep(1000);
 		} catch (InterruptedException e) {
@@ -186,7 +195,7 @@ public class Server {
 							config.logger.info(e.getMessage());
 						}
 					}
-					CrashServer();
+					crashServer();
 				}
 			};
 			t.start();

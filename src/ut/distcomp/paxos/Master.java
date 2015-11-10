@@ -66,7 +66,7 @@ public class Master {
 				break;
 			case "crashServer":
 				nodeIndex = Integer.parseInt(inputLine[1]);
-				servers[nodeIndex].CrashServer();
+				servers[nodeIndex].crashServer();
 				/*
 				 * Immediately crash the server specified by nodeIndex
 				 */
@@ -88,16 +88,7 @@ public class Master {
 				break;
 			}
 		}
-		for (int i = 0; i < numClients; i++) {
-			if (clients[i] != null) {
-				clients[i].CrashClient();
-			}
-		}
-		for (int i = 0; i < numNodes; i++) {
-			if (servers[i] != null) {
-				servers[i].CrashServer();
-			}
-		}
+		shutDownProcesses(numNodes, numClients);
 		scan.close();
 		System.exit(0);
 		return;
@@ -113,7 +104,7 @@ public class Master {
 			int numClients) {
 		servers[nodeIndex] = null;
 		try {
-			Thread.sleep(1000);
+			Thread.sleep(2000);
 		} catch (InterruptedException e) {
 			return;
 		}
@@ -143,6 +134,23 @@ public class Master {
 		}
 		try {
 			Thread.sleep(Config.RevivalDelay + 2 * Config.HeartbeatFrequency);
+		} catch (InterruptedException e) {
+		}
+	}
+	
+	private static void shutDownProcesses(int numServers, int numClients) {
+		for (int i = 0; i < numClients; i++) {
+			if (clients[i] != null) {
+				clients[i].CrashClient();
+			}
+		}
+		for (int i = 0; i < numServers; i++) {
+			if (servers[i] != null) {
+				servers[i].stopServer();
+			}
+		}
+		try {
+			Thread.sleep(2000);
 		} catch (InterruptedException e) {
 		}
 	}
