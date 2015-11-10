@@ -1,0 +1,15 @@
+start 7 3
+crashServer 0
+crashServer 1
+crashServer 2
+crashServer 3
+sendMessage 0 I am 1
+sendMessage 1 I am 2
+sendMessage 2 I am 3
+allClear
+restartServer 1
+allClear
+printChatLog 0
+printChatLog 1
+printChatLog 2
+exit

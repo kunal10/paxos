@@ -97,9 +97,9 @@ public class Config {
 	 */
 	public int numServers;
 
-	public static final int HeartbeatTimeout = 1200;
+	public static final int HeartbeatTimeout = 600;
 	
-	public static final int HeartbeatFrequency = 1000;
+	public static final int HeartbeatFrequency = 500;
 	
 	public static final int RevivalDelay = HeartbeatTimeout * 2;
 	

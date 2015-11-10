@@ -1,0 +1,13 @@
+start 5 2
+crashServer 2
+crashServer 3
+timeBombLeader 2 
+sendMessage 1 Future primary is dead
+printChatLog 0
+printChatLog 1
+restartServer 2
+allClear
+printChatLog 0
+printChatLog 1
+exit
+

@@ -268,7 +268,6 @@ public class NetController {
 				if (sock != null)
 					sock.cleanShutdown();
 		}
-
 	}
 
 	public static void main(String[] args) {
@@ -279,7 +278,6 @@ public class NetController {
 		try {
 			p1 = new Config(0, numOfServers, numOfClients, "config_p0.txt");
 			p2 = new Config(1, numOfServers, numOfClients, "config_p1.txt");
-
 		} catch (FileNotFoundException e) {
 			// e.printStackTrace();
 		} catch (IOException e) {
@@ -300,7 +298,5 @@ public class NetController {
 				commander, scout, heartbeat);
 		Message m = new Message(0, 1);
 		p1_con.sendMsg(1, m);
-
 	}
-
 }

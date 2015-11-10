@@ -28,34 +28,24 @@ public class Replica extends Thread {
 	// Interacts with other replicas to recover the lost state.
 	public void recover() {
 		config.logger.info("Retriving state for replica");
-		// TODO : Should you run this in while loop till you get a recovery
-		// message since there has to be one process which has to reply
-		for (int i = 0; i < config.numServers; i++) {
-			if (i != replicaId) {
-				sendStateRequest(i);
-				Message recoverMessage = waitForStateResponse();
-				if (recoverMessage != null) {
-					config.logger.info("Retriving state from message "
-							+ recoverMessage.toString());
-					decisions = recoverMessage.getDecisions();
-					proposals = recoverMessage.getProposals();
-					// TODO : Check
-					break;
-				}
-			}
+		sendStateRequest();
+		Message recoverMessage = waitForStateResponse();
+		if (recoverMessage != null) {
+			config.logger.info("Retriving state from message "
+					+ recoverMessage.toString());
+			decisions = recoverMessage.getDecisions();
+			proposals = recoverMessage.getProposals();
 		}
 		sendProposalsToLeaderOnRecovery();
-
 	}
 
 	private Message waitForStateResponse() {
 		Message recoverMsg = null;
 		try {
-			recoverMsg = queue.poll(Config.QueuePollTimeout,
-					TimeUnit.MILLISECONDS);
-			while (recoverMsg.getMsgType() != MessageType.STATE_RES) {
-				recoverMsg = queue.poll(Config.QueuePollTimeout,
-						TimeUnit.MILLISECONDS);
+			recoverMsg = queue.take();
+			while (recoverMsg == null
+					|| recoverMsg.getMsgType() != MessageType.STATE_RES) {
+				recoverMsg = queue.take();
 			}
 		} catch (Exception e) {
 			config.logger
@@ -64,14 +54,19 @@ public class Replica extends Thread {
 		return recoverMsg;
 	}
 
-	private void sendStateRequest(int dest) {
-		Message m = new Message(replicaId, dest);
-		m.setStateRequestContent(NodeType.REPLICA);
-		if (!nc.sendMessageToServer(dest, m)) {
-			config.logger.info("Send of state request to " + dest + " failed");
-		} else {
-			config.logger
-					.info("Send of state request to " + dest + " successful");
+	private void sendStateRequest() {
+		for (int dest = 0; dest < config.numServers; dest++) {
+			if (dest != replicaId) {
+				Message m = new Message(replicaId, dest);
+				m.setStateRequestContent(NodeType.REPLICA);
+				if (!nc.sendMessageToServer(dest, m)) {
+					config.logger.info("Acceptor : Send of state request to "
+							+ dest + " failed");
+				} else {
+					config.logger.info("Acceptor : Send of state request to "
+							+ dest + " successful");
+				}
+			}
 		}
 	}
 
