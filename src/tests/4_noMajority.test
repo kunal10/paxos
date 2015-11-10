@@ -1,0 +1,13 @@
+start 9 2
+crashServer 8
+crashServer 7
+crashServer 6
+sendMessage 0 Should be commited
+allClear
+crashServer 5
+crashServer 4
+sendMessage 1 Shouldn't be commited
+allClear
+printChatLog 0
+printChatLog 1
+exit
