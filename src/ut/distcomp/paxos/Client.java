@@ -53,6 +53,10 @@ public class Client {
 
 	public void CrashClient() {
 		nc.shutdown();
+		for (ReproposeCommand rc : reproposeTimers.values()) {
+			rc.cancel();
+		}
+		timer.cancel();
 		if (receiveThread != null) {
 			receiveThread.stop();
 		}
