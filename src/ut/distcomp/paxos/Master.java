@@ -27,6 +27,7 @@ public class Master {
 			if (masterLogging) {
 				System.out.println(inputLine[0]);
 			}
+			try {
 			switch (inputLine[0]) {
 			case "start":
 				numNodes = Integer.parseInt(inputLine[1]);
@@ -87,6 +88,7 @@ public class Master {
 				}
 				break;
 			}
+			} catch (Exception e) {}
 		}
 		shutDownProcesses(numNodes, numClients);
 		scan.close();
