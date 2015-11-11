@@ -18,6 +18,7 @@ local.properties
 
 # Generated files
 *.ans
+.DS_Store
 
 # Configs
 *SimulationConfig*
