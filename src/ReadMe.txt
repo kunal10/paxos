@@ -13,6 +13,10 @@ Name                    UT Eid    CS Id
 
 A) Commands to run:
 
+# We have changed the timeout for a test case in tester.py to 200s. If you are 
+# not using the modified tester.py in our source code, please change the timeout 
+# from 10s to 200s.
+ 
 # Assuming that you are in paxos directory obtained by unzipping the zip file.
 cd src
 
