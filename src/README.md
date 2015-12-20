@@ -13,15 +13,17 @@ Name                    UT Eid    CS Id
 
 A) Commands to run:
 
-# We have changed the timeout for a test case in tester.py to 200s. If you are 
-# not using the modified tester.py in our source code, please change the timeout 
-# from 10s to 200s.
+NOTE: We have changed the timeout for a test case in tester.py to 200s. If you are 
+not using the modified tester.py in our source code, please change the timeout 
+from 10s to 200s.
  
-# Assuming that you are in paxos directory obtained by unzipping the zip file.
+1. Assuming that you are in paxos directory obtained by unzipping the zip file run
+
 cd src
 
-# This script will build paxos project and run tester.py.
-# tester.py expects tests and solution files in src/tests and src/solutions.
+2. This script will build paxos project and run tester.py. It expects tests and
+solution files in src/tests and src/solutions.
+
 ./executePaxos.sh 
 
 B) MASTER API:
