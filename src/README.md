@@ -7,9 +7,11 @@ Total used for all projects 4
 
 TEAM INFO:
   
-Name                    UT Eid    CS Id    
-1. KUNAL LAD            KL28697   klad@cs.utexas.edu
-2. ASHWINI VENKATESH    AV28895   ashuven6@cs.utexas.edu
+Name                UT Eid    CS Id    
+
+KUNAL LAD            KL28697   klad@cs.utexas.edu
+
+ASHWINI VENKATESH    AV28895   ashuven6@cs.utexas.edu
 
 A) Commands to run:
 
@@ -17,11 +19,11 @@ NOTE: We have changed the timeout for a test case in tester.py to 200s. If you a
 not using the modified tester.py in our source code, please change the timeout 
 from 10s to 200s.
  
-1. Assuming that you are in paxos directory obtained by unzipping the zip file run
+- Assuming that you are in paxos directory obtained by unzipping the zip file run
 
 cd src
 
-2. This script will build paxos project and run tester.py. It expects tests and
+- This script will build paxos project and run tester.py. It expects tests and
 solution files in src/tests and src/solutions.
 
 ./executePaxos.sh 
